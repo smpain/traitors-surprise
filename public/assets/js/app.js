@@ -34,6 +34,7 @@ const playerNames = {
 
 async function selectPlayer(playerName) {
   const playerKey = playerName.toLowerCase();
+  console.log(`Selecting player: ${playerKey}`);
   
   // Check if player is already taken by checking game status
   try {
@@ -61,6 +62,8 @@ async function selectPlayer(playerName) {
     console.error('Error checking player availability:', error);
     // Continue anyway - better to allow selection than block due to network error
   }
+  
+  console.log(`Setting currentPlayer to ${playerKey}`);
   
   currentPlayer = playerKey;
   localStorage.setItem('traitors_player', currentPlayer);
@@ -296,49 +299,66 @@ async function render() {
     progressEl.textContent = `Question ${currentQuestionIndex + 1} of ${allQuestions.length}`;
     hideWaitingMessage();
 
-  // Check if we've already answered this question (for reconnection)
-  if (!myAnswerSubmitted) {
-    try {
-      const response = await fetch(`${API_BASE}/api/player-state?player=${currentPlayer}`);
-      if (response.ok) {
-        const playerState = await response.json();
-        // Check both numeric and string key formats
-        const previousAnswer = playerState.answers[currentQuestionIndex] || playerState.answers[String(currentQuestionIndex)];
-        
-        if (previousAnswer) {
-          console.log(`Found previous answer for question ${currentQuestionIndex + 1}`);
-          // We've already answered - disable options and show our answer
-          myAnswerSubmitted = true;
-          choices.forEach((label, i) => {
-            const btn = document.createElement('button');
-            btn.className = 'option';
-            btn.type = 'button';
-            btn.textContent = label;
-            btn.disabled = true;
-            if (i === previousAnswer.answerIndex) {
-              btn.classList.add(previousAnswer.correct ? 'correct' : 'incorrect');
-            }
-            optionsEl.appendChild(btn);
-          });
-          nextBtn.disabled = true;
-          return;
+    // Check if we've already answered this question (for reconnection)
+    // Only check if we have a current player selected
+    if (!myAnswerSubmitted && currentPlayer) {
+      try {
+        const response = await fetch(`${API_BASE}/api/player-state?player=${currentPlayer}`);
+        if (response.ok) {
+          const playerState = await response.json();
+          // Check both numeric and string key formats
+          const previousAnswer = playerState.answers && (playerState.answers[currentQuestionIndex] || playerState.answers[String(currentQuestionIndex)]);
+          
+          if (previousAnswer) {
+            console.log(`Found previous answer for question ${currentQuestionIndex + 1}`);
+            // We've already answered - disable options and show our answer
+            myAnswerSubmitted = true;
+            choices.forEach((label, i) => {
+              const btn = document.createElement('button');
+              btn.className = 'option';
+              btn.type = 'button';
+              btn.textContent = label;
+              btn.disabled = true;
+              if (i === previousAnswer.answerIndex) {
+                btn.classList.add(previousAnswer.correct ? 'correct' : 'incorrect');
+              }
+              optionsEl.appendChild(btn);
+            });
+            nextBtn.disabled = true;
+            return; // Exit early - answer already shown
+          }
         }
+      } catch (error) {
+        console.error('Error checking player state:', error);
+        // Continue with normal render on error
       }
-    } catch (error) {
-      console.error('Error checking player state:', error);
     }
-  }
 
-  // Normal render - we haven't answered yet
-  console.log(`Rendering fresh question ${currentQuestionIndex + 1} - no previous answer`);
-  choices.forEach((label, i) => {
-    const btn = document.createElement('button');
-    btn.className = 'option';
-    btn.type = 'button';
-    btn.textContent = label;
-    btn.addEventListener('click', () => selectOption(i, btn));
-    optionsEl.appendChild(btn);
-  });
+    // Normal render - we haven't answered yet
+    console.log(`Rendering fresh question ${currentQuestionIndex + 1} - no previous answer`);
+    
+    // Verify optionsEl is empty before adding new options
+    if (optionsEl.children.length > 0) {
+      console.warn(`⚠️ Options element not empty before rendering! Clearing ${optionsEl.children.length} existing children.`);
+      optionsEl.innerHTML = '';
+    }
+    
+    choices.forEach((label, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'option';
+      btn.type = 'button';
+      btn.textContent = label;
+      btn.addEventListener('click', () => selectOption(i, btn));
+      optionsEl.appendChild(btn);
+    });
+    
+    // Verify we didn't create duplicates
+    if (optionsEl.children.length !== choices.length) {
+      console.error(`⚠️ Mismatch: Created ${optionsEl.children.length} buttons but expected ${choices.length}`);
+    }
+  } finally {
+    isRendering = false;
+  }
 }
 
 function selectOption(i, btn) {
@@ -875,8 +895,19 @@ if (resetBtn) {
 }
 
 // Initialize visibility toggles (hide test features in production)
-toggleResetButton();
-toggleSimulatePanel();
+// Call on page load and also check URL params
+if (typeof window !== 'undefined') {
+  // Wait for DOM to be ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      toggleResetButton();
+      toggleSimulatePanel();
+    });
+  } else {
+    toggleResetButton();
+    toggleSimulatePanel();
+  }
+}
 
 // Load simulate state on page load (only if on localhost)
 if (isLocalhost()) {
