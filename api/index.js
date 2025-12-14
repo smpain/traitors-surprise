@@ -393,26 +393,32 @@ app.post('/api/reset', (req, res) => {
   res.json({ success: true });
 });
 
-// Catch-all handler: serve index.html for any route that doesn't match API or static files
-// This must be after all API routes and static middleware
-// NOTE: Static files should be served by Vercel directly, not through Express
+// Serve static files from root directory for requests that reach here
+// Vercel should serve static files automatically, but if they reach Express, serve them
+const rootDir = path.join(__dirname, '..');
+const serveStatic = express.static(rootDir, { index: false });
+
+// Catch-all handler: serve static files or index.html
 app.get('*', (req, res, next) => {
   // Skip API routes - they should have been handled already
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({ error: 'API route not found' });
   }
   
-  // Static files with extensions should be served by Vercel directly via routes config
-  // If we get here, it means Vercel routing didn't catch it (file doesn't exist)
+  // Try to serve as static file first
   const staticExtensions = ['.css', '.js', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot', '.json'];
   const hasStaticExtension = staticExtensions.some(ext => req.path.toLowerCase().endsWith(ext));
   
   if (hasStaticExtension) {
-    return res.status(404).send('Static file not found');
+    // Try to serve the static file
+    return serveStatic(req, res, () => {
+      // File not found, return 404
+      res.status(404).send('File not found');
+    });
   }
   
   // For all other routes, serve index.html (SPA fallback)
-  res.sendFile(path.join(__dirname, '..', 'index.html'), (err) => {
+  res.sendFile(path.join(rootDir, 'index.html'), (err) => {
     if (err) {
       console.error('Error sending index.html:', err);
       res.status(404).send('File not found');
