@@ -33,7 +33,36 @@ const playerNames = {
 };
 
 async function selectPlayer(playerName) {
-  currentPlayer = playerName.toLowerCase();
+  const playerKey = playerName.toLowerCase();
+  
+  // Check if player is already taken by checking game status
+  try {
+    const statusResponse = await fetch(`${API_BASE}/api/game-status`);
+    if (statusResponse.ok) {
+      const status = await statusResponse.json();
+      
+      // Check if this player is already active (has answered at least one question)
+      const existingPlayer = status.players.find(p => p.name.toLowerCase() === playerKey);
+      if (existingPlayer && existingPlayer.score > 0) {
+        // Player has already played - allow reconnection
+        console.log(`Reconnecting as ${existingPlayer.name}`);
+      } else if (existingPlayer && status.currentQuestionIndex > 0) {
+        // Player exists but hasn't scored yet, and game has started
+        // Check if they've answered the current question
+        const hasCurrentAnswer = status.currentAnswers && status.currentAnswers[playerKey];
+        if (hasCurrentAnswer || existingPlayer.answered) {
+          // Player is already active in this game session
+          alert(`Sorry, ${playerNames[playerKey]} is already being used by another player. Please choose a different identity.`);
+          return;
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error checking player availability:', error);
+    // Continue anyway - better to allow selection than block due to network error
+  }
+  
+  currentPlayer = playerKey;
   localStorage.setItem('traitors_player', currentPlayer);
   highestQuestionIndexSeen = -1; // Reset tracking
   
@@ -120,6 +149,11 @@ async function updateGameStatus() {
       return;
     }
     const status = await response.json();
+    
+    // Update player button availability if we're still on selection screen
+    if (!playerSelectionSection.classList.contains('hidden')) {
+      updatePlayerButtonAvailability();
+    }
     
     // Detect if server state was reset (went backwards) - indicates cold start
     if (highestQuestionIndexSeen > 0 && status.currentQuestionIndex < highestQuestionIndexSeen) {
@@ -600,6 +634,45 @@ if (nextBtn) {
   nextBtn.addEventListener('click', submit);
 }
 
+// Update player button availability based on game status
+async function updatePlayerButtonAvailability() {
+  try {
+    const statusResponse = await fetch(`${API_BASE}/api/game-status`);
+    if (statusResponse.ok) {
+      const status = await statusResponse.json();
+      const activePlayers = new Set();
+      
+      // Track players who have answered the current question
+      status.players.forEach(p => {
+        if (p.answered || (status.currentAnswers && status.currentAnswers[p.name.toLowerCase()])) {
+          activePlayers.add(p.name.toLowerCase());
+        }
+      });
+      
+      // Disable buttons for active players
+      const playerButtons = ['eti', 'jude', 'nathalie', 'gareth'];
+      playerButtons.forEach(player => {
+        const btn = document.getElementById(`select${player.charAt(0).toUpperCase() + player.slice(1)}`);
+        if (btn) {
+          if (activePlayers.has(player) && player !== currentPlayer) {
+            btn.disabled = true;
+            btn.title = `${playerNames[player]} is already in use`;
+            btn.style.opacity = '0.5';
+            btn.style.cursor = 'not-allowed';
+          } else {
+            btn.disabled = false;
+            btn.title = '';
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+          }
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Error updating player button availability:', error);
+  }
+}
+
 // Set up player selection buttons
 const playerButtons = ['eti', 'jude', 'nathalie', 'gareth'];
 playerButtons.forEach(player => {
@@ -608,6 +681,10 @@ playerButtons.forEach(player => {
     btn.addEventListener('click', () => selectPlayer(player));
   }
 });
+
+// Update button availability on page load and periodically
+updatePlayerButtonAvailability();
+setInterval(updatePlayerButtonAvailability, 3000); // Check every 3 seconds
 
 // Check if we're on localhost
 function isLocalhost() {
