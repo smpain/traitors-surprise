@@ -164,9 +164,10 @@ footer{margin-top:24px;color:var(--muted);text-align:center}
 
 .score-item {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 4px;
+  justify-content: space-between;
+  gap: 8px;
   padding: 12px;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.03);
@@ -202,8 +203,8 @@ footer{margin-top:24px;color:var(--muted);text-align:center}
 /* Mobile: smaller score value and reduced padding */
 @media (max-width: 600px) {
   .score-item {
-    padding: 8px 4px;
-    gap: 2px;
+    padding: 8px 12px;
+    gap: 8px;
   }
   
   .score-value {
