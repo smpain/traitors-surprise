@@ -75,7 +75,12 @@ export default async function handler(req, res) {
     // Set answered flag FIRST, before any recalculation
     gameState.players[player].answered = true;
   
-  // Recalculate score from all answers
+    // IMPORTANT: Save state BEFORE recalculating scores
+    // recalculateScores() loads a fresh state, so we need to persist our changes first
+    await saveGameState(gameState);
+    console.log(`[ANSWER] Saved state with answer before recalculating scores`);
+  
+  // Recalculate score from all answers (this will load fresh state and recalculate)
   await recalculateScores();
   
   // Reload state after recalculation
