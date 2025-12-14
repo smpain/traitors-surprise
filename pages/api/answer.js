@@ -1,25 +1,36 @@
 import { getGameState, saveGameState, questions, recalculateScores, allPlayersAnswered } from '../../lib/gameState';
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  try {
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
 
-  const { player, answerIndex } = req.body;
-  
-  const gameState = await getGameState();
-  
-  if (!gameState.players[player]) {
-    return res.status(400).json({ error: 'Invalid player' });
-  }
+    const { player, answerIndex } = req.body;
+    
+    if (!questions || !Array.isArray(questions) || questions.length === 0) {
+      console.error('[ANSWER] Questions not loaded');
+      return res.status(500).json({ error: 'Questions not available' });
+    }
+    
+    const gameState = await getGameState();
+    
+    if (!gameState || !gameState.players) {
+      console.error('[ANSWER] Failed to load game state');
+      return res.status(500).json({ error: 'Failed to load game state' });
+    }
+    
+    if (!gameState.players[player]) {
+      return res.status(400).json({ error: 'Invalid player' });
+    }
 
-  if (gameState.phase !== 'answering') {
-    return res.status(400).json({ error: 'Not accepting answers in current phase' });
-  }
+    if (gameState.phase !== 'answering') {
+      return res.status(400).json({ error: 'Not accepting answers in current phase' });
+    }
 
-  const playerState = gameState.players[player];
-  const qIndex = gameState.currentQuestionIndex;
-  const question = questions[qIndex];
+    const playerState = gameState.players[player];
+    const qIndex = gameState.currentQuestionIndex;
+    const question = questions[qIndex];
   
   if (!question) {
     return res.status(400).json({ error: 'Invalid question index' });
@@ -74,11 +85,15 @@ export default async function handler(req, res) {
   
   await saveGameState(updatedState);
 
-  res.json({ 
-    success: true, 
-    score: updatedState.players[player].score,
-    allAnswered: allAnswered,
-    phase: updatedState.phase,
-    currentQuestionIndex: updatedState.currentQuestionIndex
-  });
+    return res.json({ 
+      success: true, 
+      score: updatedState.players[player].score,
+      allAnswered: allAnswered,
+      phase: updatedState.phase,
+      currentQuestionIndex: updatedState.currentQuestionIndex
+    });
+  } catch (error) {
+    console.error('[ANSWER] Error:', error);
+    return res.status(500).json({ error: 'Internal server error', message: error.message });
+  }
 }

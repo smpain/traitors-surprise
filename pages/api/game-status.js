@@ -1,46 +1,57 @@
 import { getGameState, autoAnswerSimulatedPlayers } from '../../lib/gameState';
 
 export default async function handler(req, res) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  const gameState = await getGameState();
-  const players = Object.values(gameState.players);
-  
-  // Log state for debugging
-  console.log(`[GAME-STATUS] Q${gameState.currentQuestionIndex + 1}, phase=${gameState.phase}, answered: ${players.filter(p => p.answered).map(p => p.name).join(',') || 'none'}`);
-  
-  // Trigger auto-answer for simulated players when a new question starts
-  if (gameState.phase === 'answering') {
-    autoAnswerSimulatedPlayers();
-  }
-  
-  const response = {
-    currentQuestionIndex: gameState.currentQuestionIndex,
-    phase: gameState.phase,
-    players: players.map(p => ({
-      name: p.name,
-      score: p.score,
-      answered: p.answered,
-      simulated: p.simulated
-    })),
-    currentAnswers: gameState.currentAnswers
-  };
-  
-  // Debug check for state inconsistency
-  const allAnswered = players.every(p => p.answered === true);
-  if (gameState.phase === 'answering' && allAnswered) {
-    console.warn(`[GAME-STATUS] State inconsistency: All players answered but phase is still 'answering'`);
-  }
-  
-  // Check if state was reset (question index went backwards)
-  if (req.headers['x-game-question-index']) {
-    const previousIndex = parseInt(req.headers['x-game-question-index']);
-    if (previousIndex > gameState.currentQuestionIndex) {
-      console.error(`[GAME-STATUS] WARNING: State reset detected! Previous Q${previousIndex + 1} -> Current Q${gameState.currentQuestionIndex + 1}`);
+  try {
+    if (req.method !== 'GET') {
+      return res.status(405).json({ error: 'Method not allowed' });
     }
+
+    const gameState = await getGameState();
+    
+    if (!gameState) {
+      console.error('[GAME-STATUS] Failed to load game state');
+      return res.status(500).json({ error: 'Failed to load game state' });
+    }
+    
+    const players = Object.values(gameState.players);
+    
+    // Log state for debugging
+    console.log(`[GAME-STATUS] Q${gameState.currentQuestionIndex + 1}, phase=${gameState.phase}, answered: ${players.filter(p => p.answered).map(p => p.name).join(',') || 'none'}`);
+    
+    // Trigger auto-answer for simulated players when a new question starts
+    if (gameState.phase === 'answering') {
+      autoAnswerSimulatedPlayers();
+    }
+    
+    const response = {
+      currentQuestionIndex: gameState.currentQuestionIndex,
+      phase: gameState.phase,
+      players: players.map(p => ({
+        name: p.name,
+        score: p.score,
+        answered: p.answered,
+        simulated: p.simulated
+      })),
+      currentAnswers: gameState.currentAnswers
+    };
+    
+    // Debug check for state inconsistency
+    const allAnswered = players.every(p => p.answered === true);
+    if (gameState.phase === 'answering' && allAnswered) {
+      console.warn(`[GAME-STATUS] State inconsistency: All players answered but phase is still 'answering'`);
+    }
+    
+    // Check if state was reset (question index went backwards)
+    if (req.headers['x-game-question-index']) {
+      const previousIndex = parseInt(req.headers['x-game-question-index']);
+      if (previousIndex > gameState.currentQuestionIndex) {
+        console.error(`[GAME-STATUS] WARNING: State reset detected! Previous Q${previousIndex + 1} -> Current Q${gameState.currentQuestionIndex + 1}`);
+      }
+    }
+    
+    return res.json(response);
+  } catch (error) {
+    console.error('[GAME-STATUS] Error:', error);
+    return res.status(500).json({ error: 'Internal server error', message: error.message });
   }
-  
-  res.json(response);
 }
