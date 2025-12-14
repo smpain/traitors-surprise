@@ -416,8 +416,16 @@ app.get('*', (req, res, next) => {
     return res.status(404).json({ error: 'API route not found' });
   }
   
-  // Skip static file requests (they should have been handled by express.static)
-  // If express.static didn't find the file, it calls next(), so we know it's not a static file
+  // Skip static file extensions - if express.static didn't serve it, return 404
+  // Don't serve index.html for files that should be static assets
+  const staticExtensions = ['.css', '.js', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot', '.json'];
+  const hasStaticExtension = staticExtensions.some(ext => req.path.toLowerCase().endsWith(ext));
+  
+  if (hasStaticExtension) {
+    // This should have been served by express.static, so return 404
+    return res.status(404).send('Static file not found');
+  }
+  
   // For all other routes, serve index.html (SPA fallback)
   res.sendFile(path.join(__dirname, '..', 'index.html'), (err) => {
     if (err) {
