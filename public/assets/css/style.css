@@ -76,16 +76,31 @@ footer{margin-top:24px;color:var(--muted);text-align:center}
 
 /* Player selection */
 .player-buttons {
-  display: flex;
-  gap: 16px;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
   margin-top: 20px;
 }
 
 .player-btn {
-  min-width: 120px;
+  width: 100%;
   font-size: 18px;
-  padding: 14px 24px;
+  padding: 14px 20px;
+}
+
+/* On larger screens, keep buttons in a single row */
+@media (min-width: 600px) {
+  .player-buttons {
+    display: flex;
+    grid-template-columns: none;
+    justify-content: center;
+    gap: 16px;
+  }
+  
+  .player-btn {
+    min-width: 120px;
+    width: auto;
+  }
 }
 
 /* Leaderboard */
