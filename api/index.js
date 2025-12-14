@@ -9,23 +9,8 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// Serve static files from the root directory
-const rootDir = path.join(__dirname, '..');
-
-// Serve static files with proper middleware order
-// This must come BEFORE the API routes so static files are served first
-app.use(express.static(rootDir, {
-  index: false, // Don't serve index.html automatically, we'll handle it
-  setHeaders: (res, filePath) => {
-    // Set proper content-type headers
-    if (filePath.endsWith('.css')) {
-      res.setHeader('Content-Type', 'text/css; charset=utf-8');
-    } else if (filePath.endsWith('.js')) {
-      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-    }
-  },
-  maxAge: '1d' // Cache static assets
-}));
+// Note: Static files (CSS, JS, images) are served by Vercel directly via vercel.json routes
+// Express only handles API routes and index.html fallback for SPA routing
 
 const questions = questionsData.allQuestions;
 
