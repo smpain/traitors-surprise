@@ -33,6 +33,7 @@ const playerNames = {
 async function selectPlayer(playerName) {
   currentPlayer = playerName.toLowerCase();
   localStorage.setItem('traitors_player', currentPlayer);
+  highestQuestionIndexSeen = -1; // Reset tracking
   
   // Check if player has previous answers (reconnection)
   try {
@@ -41,6 +42,7 @@ async function selectPlayer(playerName) {
       const playerState = await response.json();
       // Score is already calculated on server, just continue
       console.log(`Reconnected as ${playerState.name}, score: ${playerState.score}, at question ${playerState.currentQuestionIndex + 1}`);
+      highestQuestionIndexSeen = playerState.currentQuestionIndex;
     }
   } catch (error) {
     console.error('Error fetching player state:', error);
@@ -126,6 +128,7 @@ async function updateGameStatus() {
       // Check if question index changed (new question)
       const questionChanged = status.currentQuestionIndex !== currentQuestionIndex;
       if (questionChanged) {
+        console.log(`Question changed: ${currentQuestionIndex} -> ${status.currentQuestionIndex}`);
         currentQuestionIndex = status.currentQuestionIndex;
         myAnswerSubmitted = false;
         selected = -1;
@@ -191,6 +194,7 @@ async function render() {
     return;
   }
   
+  console.log(`Rendering question ${currentQuestionIndex + 1}`);
   const { q, choices } = allQuestions[currentQuestionIndex];
   questionEl.textContent = q;
   optionsEl.innerHTML = '';
@@ -209,6 +213,7 @@ async function render() {
         const previousAnswer = playerState.answers[currentQuestionIndex] || playerState.answers[String(currentQuestionIndex)];
         
         if (previousAnswer) {
+          console.log(`Found previous answer for question ${currentQuestionIndex + 1}`);
           // We've already answered - disable options and show our answer
           myAnswerSubmitted = true;
           choices.forEach((label, i) => {
@@ -232,6 +237,7 @@ async function render() {
   }
 
   // Normal render - we haven't answered yet
+  console.log(`Rendering fresh question ${currentQuestionIndex + 1} - no previous answer`);
   choices.forEach((label, i) => {
     const btn = document.createElement('button');
     btn.className = 'option';
@@ -353,6 +359,9 @@ async function showResults(status) {
 
 async function advanceToNextQuestion() {
   try {
+    const oldQuestionIndex = currentQuestionIndex;
+    console.log(`Advancing from question ${oldQuestionIndex}`);
+    
     const response = await fetch(`${API_BASE}/api/next-question`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -366,6 +375,7 @@ async function advanceToNextQuestion() {
     }
     
     const data = await response.json();
+    console.log('Advance response:', data);
     
     if (!data.success) {
       console.warn('Advance failed:', data.message);

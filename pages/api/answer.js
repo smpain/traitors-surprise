@@ -42,6 +42,8 @@ export default function handler(req, res) {
     correct: isCorrect
   };
   
+  console.log(`[ANSWER] ${player} submitting answer ${answerIndex} for Q${qIndex + 1}`);
+  
   // Set answered flag FIRST, before any recalculation
   gameState.players[player].answered = true;
   
@@ -58,13 +60,18 @@ export default function handler(req, res) {
   const allAnswered = allPlayersAnswered();
   
   if (allAnswered) {
+    console.log(`[ANSWER] All players answered Q${qIndex + 1}, moving to showing-results`);
     gameState.phase = 'showing-results';
+  } else {
+    const missing = Object.keys(gameState.players).filter(p => !gameState.players[p].answered);
+    console.log(`[ANSWER] Waiting for: ${missing.map(p => gameState.players[p].name).join(', ')}`);
   }
 
   res.json({ 
     success: true, 
     score: playerState.score,
     allAnswered: allAnswered,
-    phase: gameState.phase
+    phase: gameState.phase,
+    currentQuestionIndex: gameState.currentQuestionIndex
   });
 }
