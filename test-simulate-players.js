@@ -190,9 +190,14 @@ async function simulateAllPlayersAnswer() {
         // Check if the answer was rejected (already answered)
         if (result && result.success === false) {
           console.log(`⏭ ${player.name}: ${result.message || 'Answer rejected'}`);
+          // If rejected, mark as answered locally to prevent retry
+          // (The server already has the answer, we just need to stop trying)
+          return; // Exit early to prevent any retry logic
         }
       } catch (error) {
         console.error(`Failed to simulate ${player.id}:`, error.message);
+        // On error, don't retry - exit early
+        return;
       }
     });
   
@@ -237,12 +242,17 @@ async function main() {
           return !playerStatus || !playerStatus.answered;
         });
         
-        if (needsAnswer) {
+        // Only simulate if we're not already simulating and players need to answer
+        if (needsAnswer && !isSimulating) {
           await simulateAllPlayersAnswer();
-        } else {
+        } else if (!needsAnswer) {
           // All players have answered, just wait quietly
           // (don't log anything to avoid spam)
         }
+        // If isSimulating is true, skip - we're already handling it
+      } else if (status.phase === 'showing-results') {
+        // Don't try to answer when showing results - wait for next question
+        // (don't log to avoid spam)
       }
       
       // Wait before next check
