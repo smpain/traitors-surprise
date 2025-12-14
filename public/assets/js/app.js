@@ -264,20 +264,37 @@ function renderLeaderboard(players) {
   `;
 }
 
+let isRendering = false;
+
 async function render() {
+  // Prevent concurrent renders
+  if (isRendering) {
+    console.log('Render already in progress, skipping...');
+    return;
+  }
+  
   if (currentQuestionIndex >= allQuestions.length || currentQuestionIndex < 0) {
     console.warn(`Invalid question index: ${currentQuestionIndex}`);
     return;
   }
   
-  console.log(`Rendering question ${currentQuestionIndex + 1}`);
-  const { q, choices } = allQuestions[currentQuestionIndex];
-  questionEl.textContent = q;
-  optionsEl.innerHTML = '';
-  nextBtn.disabled = true;
-  selected = -1;
-  progressEl.textContent = `Question ${currentQuestionIndex + 1} of ${allQuestions.length}`;
-  hideWaitingMessage();
+  isRendering = true;
+  
+  try {
+    console.log(`Rendering question ${currentQuestionIndex + 1}`);
+    const { q, choices } = allQuestions[currentQuestionIndex];
+    questionEl.textContent = q;
+    
+    // Clear options completely before rendering
+    while (optionsEl.firstChild) {
+      optionsEl.removeChild(optionsEl.firstChild);
+    }
+    optionsEl.innerHTML = ''; // Double-clear to be safe
+    
+    nextBtn.disabled = true;
+    selected = -1;
+    progressEl.textContent = `Question ${currentQuestionIndex + 1} of ${allQuestions.length}`;
+    hideWaitingMessage();
 
   // Check if we've already answered this question (for reconnection)
   if (!myAnswerSubmitted) {
