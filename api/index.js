@@ -443,3 +443,12 @@ app.get('*', (req, res, next) => {
 // Export the app for Vercel serverless functions
 // Vercel automatically wraps Express apps
 module.exports = app;
+
+// Add error handler for uncaught errors
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
