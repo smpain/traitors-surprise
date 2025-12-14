@@ -1,13 +1,14 @@
-import { gameState, autoAnswerSimulatedPlayers } from '../../lib/gameState';
+import { getGameState, autoAnswerSimulatedPlayers } from '../../lib/gameState';
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const gameState = await getGameState();
   const players = Object.values(gameState.players);
   
-  // Log state for debugging cold start issues
+  // Log state for debugging
   console.log(`[GAME-STATUS] Q${gameState.currentQuestionIndex + 1}, phase=${gameState.phase}, answered: ${players.filter(p => p.answered).map(p => p.name).join(',') || 'none'}`);
   
   // Trigger auto-answer for simulated players when a new question starts

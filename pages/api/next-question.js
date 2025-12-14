@@ -1,13 +1,15 @@
-import { gameState, questions, autoAnswerSimulatedPlayers, pendingSimulatedAnswers } from '../../lib/gameState';
+import { getGameState, saveGameState, questions, autoAnswerSimulatedPlayers, pendingSimulatedAnswers, _isAdvancing, _setIsAdvancing } from '../../lib/gameState';
 
-let isAdvancing = false;
+let localIsAdvancing = false;
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   const { player } = req.body;
+  
+  const gameState = await getGameState();
   
   if (!gameState.players[player]) {
     return res.status(400).json({ error: 'Invalid player' });
@@ -18,11 +20,11 @@ export default function handler(req, res) {
   }
 
   // Prevent multiple simultaneous advances
-  if (isAdvancing) {
+  if (localIsAdvancing || _isAdvancing()) {
     return res.json({ success: false, message: 'Already advancing' });
   }
 
-  isAdvancing = true;
+  localIsAdvancing = true;
   
   gameState.currentQuestionIndex += 1;
   
@@ -43,10 +45,12 @@ export default function handler(req, res) {
       autoAnswerSimulatedPlayers();
     }, 100);
   }
+  
+  await saveGameState(gameState);
 
   // Allow next advance after a short delay
   setTimeout(() => {
-    isAdvancing = false;
+    localIsAdvancing = false;
   }, 500);
 
   res.json({ 

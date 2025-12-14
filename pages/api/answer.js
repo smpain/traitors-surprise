@@ -1,11 +1,13 @@
-import { gameState, questions, recalculateScores, allPlayersAnswered } from '../../lib/gameState';
+import { getGameState, saveGameState, questions, recalculateScores, allPlayersAnswered } from '../../lib/gameState';
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   const { player, answerIndex } = req.body;
+  
+  const gameState = await getGameState();
   
   if (!gameState.players[player]) {
     return res.status(400).json({ error: 'Invalid player' });
@@ -48,30 +50,35 @@ export default function handler(req, res) {
   gameState.players[player].answered = true;
   
   // Recalculate score from all answers
-  recalculateScores();
+  await recalculateScores();
+  
+  // Reload state after recalculation
+  const updatedState = await getGameState();
   
   // Double-check answered flag is still set after recalculation (defensive)
-  if (!gameState.players[player].answered) {
+  if (!updatedState.players[player].answered) {
     console.warn(`⚠ ${player}.answered was reset during recalculation! Restoring...`);
-    gameState.players[player].answered = true;
+    updatedState.players[player].answered = true;
   }
   
   // Check if all players have answered
-  const allAnswered = allPlayersAnswered();
+  const allAnswered = await allPlayersAnswered();
   
   if (allAnswered) {
     console.log(`[ANSWER] All players answered Q${qIndex + 1}, moving to showing-results`);
-    gameState.phase = 'showing-results';
+    updatedState.phase = 'showing-results';
   } else {
-    const missing = Object.keys(gameState.players).filter(p => !gameState.players[p].answered);
-    console.log(`[ANSWER] Waiting for: ${missing.map(p => gameState.players[p].name).join(', ')}`);
+    const missing = Object.keys(updatedState.players).filter(p => !updatedState.players[p].answered);
+    console.log(`[ANSWER] Waiting for: ${missing.map(p => updatedState.players[p].name).join(', ')}`);
   }
+  
+  await saveGameState(updatedState);
 
   res.json({ 
     success: true, 
-    score: playerState.score,
+    score: updatedState.players[player].score,
     allAnswered: allAnswered,
-    phase: gameState.phase,
-    currentQuestionIndex: gameState.currentQuestionIndex
+    phase: updatedState.phase,
+    currentQuestionIndex: updatedState.currentQuestionIndex
   });
 }

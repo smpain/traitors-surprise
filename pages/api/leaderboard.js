@@ -1,14 +1,14 @@
-import { gameState, recalculateScores } from '../../lib/gameState';
+import { getGameState, recalculateScores } from '../../lib/gameState';
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   // Recalculate scores to ensure they're up to date when showing final results
-  // This should be safe - it only reads from allAnswers and updates scores
-  recalculateScores();
+  await recalculateScores();
 
+  const gameState = await getGameState();
   const players = Object.values(gameState.players);
   
   // Return scores - these should be calculated from allAnswers

@@ -1,10 +1,11 @@
-import { gameState } from '../../lib/gameState';
+import { getGameState, saveGameState, getInitialState } from '../../lib/gameState';
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const gameState = await getGameState();
   const simulatedStates = {
     eti: gameState.players.eti.simulated,
     jude: gameState.players.jude.simulated,
@@ -12,20 +13,14 @@ export default function handler(req, res) {
     gareth: gameState.players.gareth.simulated
   };
   
-  // Reset the global state object (mutate in place to preserve singleton reference)
-  gameState.currentQuestionIndex = 0;
-  gameState.phase = 'answering';
-  gameState.players.eti = { name: 'Eti', score: 0, answered: false, simulated: simulatedStates.eti };
-  gameState.players.jude = { name: 'Jude', score: 0, answered: false, simulated: simulatedStates.jude };
-  gameState.players.nathalie = { name: 'Nathalie', score: 0, answered: false, simulated: simulatedStates.nathalie };
-  gameState.players.gareth = { name: 'Gareth', score: 0, answered: false, simulated: simulatedStates.gareth };
-  gameState.currentAnswers = {};
-  gameState.allAnswers = {};
+  // Reset to initial state but preserve simulated flags
+  const resetState = getInitialState();
+  resetState.players.eti.simulated = simulatedStates.eti;
+  resetState.players.jude.simulated = simulatedStates.jude;
+  resetState.players.nathalie.simulated = simulatedStates.nathalie;
+  resetState.players.gareth.simulated = simulatedStates.gareth;
   
-  // Initialize allAnswers structure
-  Object.keys(gameState.players).forEach(player => {
-    gameState.allAnswers[player] = {};
-  });
+  await saveGameState(resetState);
   
   res.json({ success: true });
 }

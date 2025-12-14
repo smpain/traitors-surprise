@@ -1,11 +1,12 @@
-import { gameState } from '../../lib/gameState';
+import { getGameState } from '../../lib/gameState';
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   const { player } = req.query;
+  const gameState = await getGameState();
   
   if (!player || !gameState.players[player]) {
     return res.status(400).json({ error: 'Invalid player' });

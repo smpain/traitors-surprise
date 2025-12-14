@@ -1,7 +1,8 @@
-import { gameState, autoAnswerSimulatedPlayers } from '../../lib/gameState';
+import { getGameState, saveGameState, autoAnswerSimulatedPlayers } from '../../lib/gameState';
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method === 'GET') {
+    const gameState = await getGameState();
     const players = Object.keys(gameState.players).map(key => ({
       player: key,
       name: gameState.players[key].name,
@@ -12,12 +13,14 @@ export default function handler(req, res) {
 
   if (req.method === 'POST') {
     const { player, simulated } = req.body;
+    const gameState = await getGameState();
     
     if (!player || !gameState.players[player]) {
       return res.status(400).json({ error: 'Invalid player' });
     }
     
     gameState.players[player].simulated = !!simulated;
+    await saveGameState(gameState);
     
     // If we just enabled simulation and we're in answering phase, trigger auto-answer
     if (simulated && gameState.phase === 'answering') {
