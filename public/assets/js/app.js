@@ -16,6 +16,12 @@ const waitingSection = document.getElementById('waiting');
 const crestEl = document.getElementById('crest');
 const finalScoresEl = document.getElementById('finalScores');
 
+// Get header elements to hide after first question
+const heroHeader = document.querySelector('header.hero h1');
+const heroTag = document.querySelector('header.hero .tag');
+const missionHeader = missionSection ? missionSection.querySelector('h2') : null;
+const missionDescription = missionSection ? missionSection.querySelector('p') : null;
+
 let currentPlayer = null;
 let selected = -1;
 let gameStatusInterval = null;
@@ -86,6 +92,15 @@ async function selectPlayer(playerName) {
   missionSection.classList.remove('hidden');
   resultsSection.classList.add('hidden');
   waitingSection.classList.add('hidden');
+  
+  // Check if we're past the first question and hide intro elements
+  // This will be updated when render() is called, but set initial state
+  if (currentQuestionIndex > 0) {
+    if (heroHeader) heroHeader.style.display = 'none';
+    if (heroTag) heroTag.style.display = 'none';
+    if (missionHeader) missionHeader.style.display = 'none';
+    if (missionDescription) missionDescription.style.display = 'none';
+  }
   
   startGameStatusPolling();
 }
@@ -298,6 +313,20 @@ async function render() {
     selected = -1;
     progressEl.textContent = `Question ${currentQuestionIndex + 1} of ${allQuestions.length}`;
     hideWaitingMessage();
+    
+    // Hide intro elements after first question is answered
+    if (currentQuestionIndex > 0) {
+      if (heroHeader) heroHeader.style.display = 'none';
+      if (heroTag) heroTag.style.display = 'none';
+      if (missionHeader) missionHeader.style.display = 'none';
+      if (missionDescription) missionDescription.style.display = 'none';
+    } else {
+      // Show intro elements on first question
+      if (heroHeader) heroHeader.style.display = '';
+      if (heroTag) heroTag.style.display = '';
+      if (missionHeader) missionHeader.style.display = '';
+      if (missionDescription) missionDescription.style.display = '';
+    }
 
     // Check if we've already answered this question (for reconnection)
     // Only check if we have a current player selected
