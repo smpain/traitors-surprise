@@ -21,6 +21,8 @@ let selected = -1;
 let gameStatusInterval = null;
 let currentQuestionIndex = -1;
 let myAnswerSubmitted = false;
+let highestQuestionIndexSeen = -1; // Track highest question to prevent flashing backwards
+let isUpdatingStatus = false; // Prevent concurrent status updates
 
 // Player display names
 const playerNames = {
@@ -100,13 +102,43 @@ function updateCrestProgress(questionIndex, totalQuestions) {
 }
 
 async function updateGameStatus() {
+  // Prevent concurrent updates
+  if (isUpdatingStatus) {
+    return;
+  }
+  
+  isUpdatingStatus = true;
+  
   try {
-    const response = await fetch(`${API_BASE}/api/game-status`);
+    const response = await fetch(`${API_BASE}/api/game-status`, {
+      headers: {
+        'X-Game-Question-Index': currentQuestionIndex.toString()
+      }
+    });
     if (!response.ok) {
       console.error('Failed to fetch game status');
       return;
     }
     const status = await response.json();
+    
+    // Detect if server state was reset (went backwards) - indicates cold start
+    if (highestQuestionIndexSeen > 0 && status.currentQuestionIndex < highestQuestionIndexSeen) {
+      console.error(`⚠ SERVER STATE RESET DETECTED! We were on Q${highestQuestionIndexSeen + 1}, server says Q${status.currentQuestionIndex + 1}`);
+      console.error('This is likely a serverless cold start. Ignoring stale response.');
+      // Don't reset the UI - keep showing what we had
+      return;
+    }
+    
+    // Update highest seen
+    if (status.currentQuestionIndex > highestQuestionIndexSeen) {
+      highestQuestionIndexSeen = status.currentQuestionIndex;
+    }
+    
+    // Only update UI if question index is >= what we've seen (prevent flashing backwards)
+    if (status.currentQuestionIndex < currentQuestionIndex && currentQuestionIndex >= 0) {
+      console.warn(`⚠ Ignoring stale state: Server Q${status.currentQuestionIndex + 1} < Local Q${currentQuestionIndex + 1}`);
+      return;
+    }
     
     // Update crest progress
     updateCrestProgress(status.currentQuestionIndex, allQuestions.length);
@@ -127,13 +159,15 @@ async function updateGameStatus() {
       
       // Check if question index changed (new question)
       const questionChanged = status.currentQuestionIndex !== currentQuestionIndex;
-      if (questionChanged) {
+      
+      // Only advance forward, never backwards
+      if (questionChanged && status.currentQuestionIndex >= currentQuestionIndex) {
         console.log(`Question changed: ${currentQuestionIndex} -> ${status.currentQuestionIndex}`);
         currentQuestionIndex = status.currentQuestionIndex;
         myAnswerSubmitted = false;
         selected = -1;
         await render();
-      } else {
+      } else if (!questionChanged) {
         // Question hasn't changed - only update UI state
         const myPlayer = status.players.find(p => p.name.toLowerCase() === currentPlayer);
         
@@ -144,6 +178,12 @@ async function updateGameStatus() {
         } else if (!myPlayer || !myPlayer.answered) {
           // We haven't answered yet
           hideWaitingMessage();
+          if (myAnswerSubmitted) {
+            // Reset if we thought we answered but server says we didn't
+            myAnswerSubmitted = false;
+            selected = -1;
+            await render();
+          }
         }
       }
     } else if (status.phase === 'showing-results') {
@@ -151,6 +191,8 @@ async function updateGameStatus() {
     }
   } catch (error) {
     console.error('Error fetching game status:', error);
+  } finally {
+    isUpdatingStatus = false;
   }
 }
 
