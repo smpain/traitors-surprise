@@ -126,7 +126,6 @@ async function updateGameStatus() {
       // Check if question index changed (new question)
       const questionChanged = status.currentQuestionIndex !== currentQuestionIndex;
       if (questionChanged) {
-        console.log(`Question changed: ${currentQuestionIndex} -> ${status.currentQuestionIndex}`);
         currentQuestionIndex = status.currentQuestionIndex;
         myAnswerSubmitted = false;
         selected = -1;
@@ -192,7 +191,6 @@ async function render() {
     return;
   }
   
-  console.log(`Rendering question ${currentQuestionIndex + 1}`);
   const { q, choices } = allQuestions[currentQuestionIndex];
   questionEl.textContent = q;
   optionsEl.innerHTML = '';
@@ -211,7 +209,6 @@ async function render() {
         const previousAnswer = playerState.answers[currentQuestionIndex] || playerState.answers[String(currentQuestionIndex)];
         
         if (previousAnswer) {
-          console.log(`Found previous answer for question ${currentQuestionIndex + 1}`);
           // We've already answered - disable options and show our answer
           myAnswerSubmitted = true;
           choices.forEach((label, i) => {
@@ -235,7 +232,6 @@ async function render() {
   }
 
   // Normal render - we haven't answered yet
-  console.log(`Rendering fresh question ${currentQuestionIndex + 1} - no previous answer`);
   choices.forEach((label, i) => {
     const btn = document.createElement('button');
     btn.className = 'option';
@@ -357,9 +353,6 @@ async function showResults(status) {
 
 async function advanceToNextQuestion() {
   try {
-    const oldQuestionIndex = currentQuestionIndex;
-    console.log(`Advancing from question ${oldQuestionIndex}`);
-    
     const response = await fetch(`${API_BASE}/api/next-question`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -373,7 +366,6 @@ async function advanceToNextQuestion() {
     }
     
     const data = await response.json();
-    console.log('Advance response:', data);
     
     if (!data.success) {
       console.warn('Advance failed:', data.message);
