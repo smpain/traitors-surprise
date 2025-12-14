@@ -665,12 +665,22 @@ if (isLocalhost()) {
 // Initialize simulate panel visibility
 toggleSimulatePanel();
 
-// Show/hide reset button based on hostname
+// Show/hide reset button based on hostname or URL parameter
 function toggleResetButton() {
   const resetBtn = document.getElementById('resetBtn');
   if (resetBtn) {
-    if (isLocalhost()) {
+    // Show reset button if:
+    // 1. On localhost, OR
+    // 2. URL has ?admin=true parameter (for production reset)
+    const urlParams = new URLSearchParams(window.location.search);
+    const isAdmin = urlParams.get('admin') === 'true';
+    
+    if (isLocalhost() || isAdmin) {
       resetBtn.style.display = 'block';
+      if (isAdmin) {
+        resetBtn.style.backgroundColor = '#d32f2f'; // Red color to indicate admin mode
+        resetBtn.textContent = '🔴 RESET GAME (ADMIN)';
+      }
     } else {
       resetBtn.style.display = 'none';
     }
@@ -679,7 +689,19 @@ function toggleResetButton() {
 
 // Reset game function
 async function resetGame() {
-  if (!confirm('Are you sure you want to reset the game? This will clear all progress.')) {
+  const urlParams = new URLSearchParams(window.location.search);
+  const isAdmin = urlParams.get('admin') === 'true';
+  
+  const confirmMessage = isAdmin 
+    ? '⚠️ ADMIN RESET: Are you sure you want to reset the game? This will clear ALL progress for ALL players and cannot be undone.'
+    : 'Are you sure you want to reset the game? This will clear all progress.';
+  
+  if (!confirm(confirmMessage)) {
+    return;
+  }
+  
+  // Double confirmation for admin mode
+  if (isAdmin && !confirm('FINAL CONFIRMATION: This will permanently delete all game state. Continue?')) {
     return;
   }
   
@@ -690,18 +712,23 @@ async function resetGame() {
     });
     
     if (response.ok) {
+      const result = await response.json();
+      console.log('Reset successful:', result);
+      
       // Clear localStorage
       localStorage.removeItem('traitors_player');
       
       // Reload the page to start fresh
+      alert('Game reset successfully! Reloading...');
       window.location.reload();
     } else {
-      console.error('Failed to reset game');
-      alert('Failed to reset game. Please try again.');
+      const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+      console.error('Failed to reset game:', error);
+      alert(`Failed to reset game: ${error.message || error.error || 'Unknown error'}`);
     }
   } catch (error) {
     console.error('Error resetting game:', error);
-    alert('Error resetting game. Please try again.');
+    alert(`Error resetting game: ${error.message}`);
   }
 }
 
