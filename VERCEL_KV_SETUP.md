@@ -9,8 +9,9 @@
 5. Click **"Add Integration"** or **"Create Database"**
 6. Follow the prompts to create a new Upstash Redis database
 7. Vercel will automatically add these environment variables to your project:
-   - `UPSTASH_REDIS_REST_URL`
-   - `UPSTASH_REDIS_REST_TOKEN`
+   - `KV_REST_API_URL` (primary - used by Vercel KV)
+   - `KV_REST_API_TOKEN` (primary - used by Vercel KV)
+   - Or alternatively: `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` (if set up directly)
 
 ## Step 2: Install Dependencies
 
@@ -38,6 +39,8 @@ Once deployed, check the Vercel function logs to see if Redis is connecting prop
 
 ## Troubleshooting
 
-- If you see connection errors, verify the environment variables are set in Vercel Dashboard → Settings → Environment Variables
+- If you see `[REDIS] Redis credentials not found`, verify the environment variables are set in Vercel Dashboard → Settings → Environment Variables
+- Vercel KV uses `KV_REST_API_URL` and `KV_REST_API_TOKEN` (not `UPSTASH_REDIS_REST_URL`)
 - Make sure you've installed `@upstash/redis` in your `package.json`
 - Check that your Vercel plan supports Upstash Redis (most plans do)
+- After adding environment variables, you may need to redeploy for them to take effect
