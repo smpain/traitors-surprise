@@ -394,6 +394,16 @@ app.post('/api/reset', (req, res) => {
   res.json({ success: true });
 });
 
+// Catch-all handler: serve index.html for any route that doesn't match API or static files
+// This must be after all API routes and static middleware
+app.get('*', (req, res) => {
+  // If it's an API route that wasn't handled, return 404
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'API route not found' });
+  }
+  // For all other routes, serve index.html (SPA fallback)
+  res.sendFile(path.join(__dirname, '..', 'index.html'));
+});
 
 // Export the app for Vercel serverless functions
 module.exports = app;
