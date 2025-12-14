@@ -393,16 +393,39 @@ app.post('/api/reset', (req, res) => {
   res.json({ success: true });
 });
 
-// Serve static files (CSS, JS) - Vercel will also serve these, but this ensures they work
+// For Vercel: serve static files and index.html
+// In serverless, __dirname points to the function directory, so we need to go up one level
 const rootDir = path.join(__dirname, '..');
-app.use(express.static(rootDir));
+
+// Serve static files (CSS, JS, images) - only if they reach Express
+// Vercel should serve these automatically, but this is a fallback
+app.use(express.static(rootDir, {
+  index: false, // Don't serve index.html automatically
+  setHeaders: (res, filePath) => {
+    // Set proper content types
+    if (filePath.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css');
+    } else if (filePath.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript');
+    }
+  }
+}));
 
 // Serve index.html for all non-API routes (SPA fallback)
 app.get('*', (req, res, next) => {
+  // Don't handle API routes here - they should be handled by specific routes above
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({ error: 'API route not found' });
   }
-  res.sendFile(path.join(rootDir, 'index.html'));
+  
+  // Serve index.html for SPA routing
+  const indexPath = path.join(rootDir, 'index.html');
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      console.error('Error serving index.html:', err);
+      res.status(500).send('Error loading page');
+    }
+  });
 });
 
 // Export the app for Vercel serverless functions
