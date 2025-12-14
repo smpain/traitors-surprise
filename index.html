@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Round Table — Birthday Mission</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+  <div id="container">
+    <header class="hero">
+      <div class="crest">T</div>
+      <h1>Take your seat at the Round Table</h1>
+      <p class="tag">A birthday mission awaits. Are you Faithful… or something else?</p>
+    </header>
+
+    <main>
+      <section id="mission" class="card">
+        <h2>Birthday Mission for Bea</h2>
+        <p>
+          Bea, your task is to answer a few quick questions at the Round Table.
+          When you succeed, your classified briefing will appear.
+          You’ll be joined by Mum, Dad and Ben.
+        </p>
+        <div id="quiz" class="quiz" aria-label="Quiz" role="group">
+          <div id="question" class="question"></div>
+          <div id="options" class="options"></div>
+          <div class="actions">
+            <button id="nextBtn" class="btn next" disabled>Submit</button>
+          </div>
+          <div id="quizProgress" class="progress"></div>
+        </div>
+      </section>
+
+      <section id="voucher" class="card voucher hidden" aria-live="polite">
+        <h2>Classified Briefing</h2>
+        <p class="lead">Mission accomplished, Bea. Your surprise is revealed.</p>
+        <div class="ticket">
+          <div class="stamp">APPROVED</div>
+          <h3>Birthday Voucher</h3>
+          <p>
+            Happy 14th Birthday, Bea! Your present is an unforgettable experience at
+            <strong>The Traitors: Live Experience</strong> in Covent Garden, London.
+          </p>
+          <p>
+            Guests: Mum, Dad and Ben.
+          </p>
+          <p><strong>Date:</strong> 28th September, 10am</p>
+          <p>Get ready for deception, strategy and fun!</p>
+          <a class="btn" href="https://www.thetraitorslive.co.uk" target="_blank" rel="noopener noreferrer">Learn about the experience</a>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <small>Inspired by The Traitors: Live Experience.</small>
+    </footer>
+  </div>
+
+  <script src="assets/js/app.js" defer></script>
+</body>
+</html>
+
+

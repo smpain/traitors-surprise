@@ -1,0 +1,44 @@
+:root{
+  --bg:#0b0c10;
+  --panel:#14161c;
+  --gold:#c7a645;
+  --accent:#9b1c2c;
+  --text:#e6e6e6;
+  --muted:#a8a8a8;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%;background:radial-gradient(1200px 600px at 20% 0%, #12131a, #0a0b0f), var(--bg);color:var(--text);font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
+#container{max-width:960px;margin:0 auto;padding:24px}
+header.hero{display:flex;flex-direction:column;align-items:center;gap:8px;padding:24px 0}
+.hero h1{font-family:'Cinzel',serif;font-weight:800;letter-spacing:0.5px;margin:0;text-align:center}
+.tag{color:var(--muted);margin:4px 0 0}
+.crest{width:56px;height:56px;border:2px solid var(--gold);color:var(--gold);display:grid;place-items:center;border-radius:50%;font-family:'Cinzel',serif;font-weight:700}
+.card{background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0));border:1px solid rgba(255,255,255,0.06);backdrop-filter:saturate(1.1) blur(6px);border-radius:16px;padding:20px;margin:16px 0;box-shadow:0 10px 24px rgba(0,0,0,0.35)}
+.progress{margin-top:12px;color:var(--muted)}
+.quiz{display:grid;gap:12px;margin-top:12px}
+.question{font-family:'Cinzel',serif;font-size:20px}
+.options{display:grid;gap:10px}
+.option{appearance:none;border:1px solid rgba(255,255,255,0.08);background:linear-gradient(160deg,#1b1e26,#131621);color:var(--text);padding:12px 14px;border-radius:12px;cursor:pointer;text-align:left;transition:border-color .15s ease, transform .06s ease}
+.option:active{transform:scale(0.99)}
+.option.selected{border-color:var(--gold);box-shadow:inset 0 0 0 2px var(--gold)}
+.option.correct{border-color:#2fb36f;box-shadow:inset 0 0 0 2px #2fb36f}
+.option.incorrect{border-color:#d34b4b;box-shadow:inset 0 0 0 2px #d34b4b}
+.actions{display:flex;gap:10px}
+.btn.next[disabled]{opacity:0.6;cursor:not-allowed}
+.voucher.hidden{display:none}
+.voucher .ticket{position:relative;border:1px dashed var(--gold);border-radius:14px;padding:16px;background:rgba(199,166,69,0.06)}
+.voucher .stamp{position:absolute;top:-10px;right:-10px;background:var(--accent);color:#fff;padding:6px 10px;border-radius:6px;transform:rotate(-8deg);font-weight:700;letter-spacing:1px;font-size:12px;box-shadow:0 8px 18px rgba(155,28,44,0.35)}
+.btn{display:inline-block;margin-top:10px;background:linear-gradient(180deg,var(--gold), #b18e2d);color:#140e00;text-decoration:none;font-weight:700;padding:10px 14px;border-radius:10px;box-shadow:0 8px 18px rgba(199,166,69,0.25)}
+footer{margin-top:24px;color:var(--muted);text-align:center}
+@media (min-width: 420px){.tile{height:90px}}
+@media (min-width: 720px){.tile{height:110px}}
+.hidden{display:none !important}
+
+/* subtle ring motif */
+header.hero::after{content:"";display:block;margin-top:10px;width:120px;height:120px;border-radius:50%;border:2px solid rgba(199,166,69,0.3);filter:blur(0.2px)}
+
+/* shake for wrong answer */
+@keyframes shake { 10%, 90% { transform: translateX(-1px); } 20%, 80% { transform: translateX(2px); } 30%, 50%, 70% { transform: translateX(-4px); } 40%, 60% { transform: translateX(4px); } }
+.shake{animation:shake .35s cubic-bezier(.36,.07,.19,.97) both}
+
+
