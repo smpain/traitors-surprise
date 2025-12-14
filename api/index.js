@@ -417,13 +417,12 @@ app.get('*', (req, res, next) => {
     return res.status(404).json({ error: 'API route not found' });
   }
   
-  // Skip static file extensions - these should be served by Vercel directly
-  const staticExtensions = ['.css', '.js', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot', '.json', '.html'];
+  // Static files with extensions should be served by Vercel directly via routes config
+  // If we get here, it means Vercel routing didn't catch it (file doesn't exist)
+  const staticExtensions = ['.css', '.js', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot', '.json'];
   const hasStaticExtension = staticExtensions.some(ext => req.path.toLowerCase().endsWith(ext));
   
-  // Don't handle static files here - they should be served by Vercel's static file serving
-  // If we get here for a static file, it means Vercel routing didn't catch it
-  if (hasStaticExtension && !req.path.endsWith('index.html')) {
+  if (hasStaticExtension) {
     return res.status(404).send('Static file not found');
   }
   

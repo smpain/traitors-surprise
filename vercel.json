@@ -12,12 +12,10 @@
       "dest": "/api/index.js"
     },
     {
-      "src": "/assets/(.*)",
-      "dest": "/assets/$1"
-    },
-    {
-      "src": "/(.*\\.(css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|json))",
-      "dest": "/$1"
+      "src": "/(.*\\.(css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|json|html))",
+      "headers": {
+        "cache-control": "public, max-age=31536000, immutable"
+      }
     },
     {
       "src": "/(.*)",
