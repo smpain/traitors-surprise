@@ -358,13 +358,28 @@ async function showResults(status) {
   }
   
   // Build results display
+  // Debug: log what we have
+  console.log('[SHOW-RESULTS] Current answers:', status.currentAnswers);
+  console.log('[SHOW-RESULTS] Players:', status.players.map(p => p.name));
+  
   const resultsHTML = `
     <h3>Question ${currentQuestionIndex + 1} Results</h3>
     <div class="results-question">${currentQuestion.q}</div>
     <div class="results-answers">
       ${status.players.map(player => {
-        const answer = status.currentAnswers[player.name.toLowerCase()];
-        if (!answer) return '';
+        const playerKey = player.name.toLowerCase();
+        const answer = status.currentAnswers[playerKey];
+        
+        if (!answer) {
+          console.warn(`[SHOW-RESULTS] No answer found for ${player.name} (key: ${playerKey})`);
+          return `
+            <div class="result-item unanswered">
+              <span class="result-player">${player.name}</span>
+              <span class="result-answer">No answer submitted</span>
+              <span class="result-mark">-</span>
+            </div>
+          `;
+        }
         
         const isCorrect = answer.correct;
         const answerText = currentQuestion.choices[answer.answerIndex];

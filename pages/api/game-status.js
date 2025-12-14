@@ -32,6 +32,21 @@ export default async function handler(req, res) {
       autoAnswerSimulatedPlayers();
     }
     
+    // Build currentAnswers from allAnswers for the current question (for results display)
+    // This ensures we have answers even if currentAnswers was cleared
+    const currentAnswersForDisplay = {};
+    if (gameState.phase === 'showing-results') {
+      Object.keys(gameState.players).forEach(playerKey => {
+        const playerAnswers = gameState.allAnswers[playerKey];
+        if (playerAnswers && playerAnswers[gameState.currentQuestionIndex]) {
+          currentAnswersForDisplay[playerKey] = playerAnswers[gameState.currentQuestionIndex];
+        }
+      });
+    } else {
+      // Use currentAnswers when still answering
+      Object.assign(currentAnswersForDisplay, gameState.currentAnswers);
+    }
+    
     const response = {
       currentQuestionIndex: gameState.currentQuestionIndex,
       phase: gameState.phase,
@@ -41,7 +56,7 @@ export default async function handler(req, res) {
         answered: p.answered,
         simulated: p.simulated
       })),
-      currentAnswers: gameState.currentAnswers
+      currentAnswers: currentAnswersForDisplay
     };
     
     // Check if state was reset (question index went backwards)
