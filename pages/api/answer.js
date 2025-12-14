@@ -92,6 +92,30 @@ export default async function handler(req, res) {
     updatedState.players[player].answered = true;
   }
   
+  // Double-check that our answer is still in allAnswers and currentAnswers
+  if (!updatedState.allAnswers[player] || !updatedState.allAnswers[player][qIndex]) {
+    console.error(`⚠ ${player}'s answer was lost from allAnswers! Restoring...`);
+    if (!updatedState.allAnswers[player]) {
+      updatedState.allAnswers[player] = {};
+    }
+    updatedState.allAnswers[player][qIndex] = {
+      answerIndex: submittedIndex,
+      correct: isCorrect
+    };
+  }
+  
+  // Ensure currentAnswers has our answer
+  if (!updatedState.currentAnswers || !updatedState.currentAnswers[player]) {
+    console.warn(`⚠ ${player}'s answer missing from currentAnswers! Restoring...`);
+    if (!updatedState.currentAnswers) {
+      updatedState.currentAnswers = {};
+    }
+    updatedState.currentAnswers[player] = {
+      answerIndex: submittedIndex,
+      correct: isCorrect
+    };
+  }
+  
   // Check if all players have answered
   const allAnswered = await allPlayersAnswered();
   
