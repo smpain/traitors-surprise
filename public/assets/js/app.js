@@ -604,28 +604,55 @@ async function submit() {
   // Highlight selected answer
   buttons[selected].classList.add('selected');
   
-  // Submit answer to server
-  try {
-    const response = await fetch(`${API_BASE}/api/answer`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        player: currentPlayer,
-        answerIndex: selected,
-        correct: correct
-      })
-    });
-    
-    if (response.ok) {
+  // Submit answer to server with retry logic
+  let retries = 3;
+  let success = false;
+  
+  while (retries > 0 && !success) {
+    try {
+      const response = await fetch(`${API_BASE}/api/answer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          player: currentPlayer,
+          answerIndex: selected
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
       const data = await response.json();
-      // Status polling will handle showing results when all players answer
-      nextBtn.disabled = true;
-      showWaitingMessage();
+      
+      if (data.success) {
+        success = true;
+        // Status polling will handle showing results when all players answer
+        nextBtn.disabled = true;
+        showWaitingMessage();
+      } else if (data.message && data.message.includes('Already answered')) {
+        // Already answered - this is fine, just mark as success
+        success = true;
+        nextBtn.disabled = true;
+        showWaitingMessage();
+      } else {
+        throw new Error(data.message || 'Unknown error');
+      }
+    } catch (error) {
+      retries--;
+      console.error(`Error submitting answer (${3 - retries}/3 attempts):`, error);
+      
+      if (retries > 0) {
+        // Wait before retry
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      } else {
+        // All retries failed - re-enable UI
+        alert('Failed to submit answer after multiple attempts. Please try again.');
+        myAnswerSubmitted = false;
+        buttons.forEach(b => b.disabled = false);
+        buttons[selected].classList.remove('selected');
+      }
     }
-  } catch (error) {
-    console.error('Error submitting answer:', error);
-    myAnswerSubmitted = false;
-    buttons.forEach(b => b.disabled = false);
   }
 }
 
