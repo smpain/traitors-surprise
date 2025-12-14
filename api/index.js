@@ -393,8 +393,17 @@ app.post('/api/reset', (req, res) => {
   res.json({ success: true });
 });
 
-// This Express app only handles API routes
-// Static files (CSS, JS, HTML) are served directly by Vercel
+// Serve static files (CSS, JS) - Vercel will also serve these, but this ensures they work
+const rootDir = path.join(__dirname, '..');
+app.use(express.static(rootDir));
+
+// Serve index.html for all non-API routes (SPA fallback)
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'API route not found' });
+  }
+  res.sendFile(path.join(rootDir, 'index.html'));
+});
 
 // Export the app for Vercel serverless functions
 module.exports = app;
