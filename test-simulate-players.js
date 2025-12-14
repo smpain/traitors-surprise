@@ -77,7 +77,9 @@ async function simulatePlayerAnswer(playerId, questionIndex, answerIndex) {
       return data; // Return the rejection response
     }
     
-    console.log(`✓ ${playerId} answered question ${questionIndex + 1} with answer ${answerIndex} (correct: ${data.score !== undefined && data.score > 0 ? 'yes' : 'no'})`);
+    // Use the correct field from API response if available, otherwise infer from score change
+    const isCorrect = data.correct !== undefined ? data.correct : (data.score !== undefined && data.score > 0);
+    console.log(`✓ ${playerId} answered question ${questionIndex + 1} with answer ${answerIndex} (correct: ${isCorrect ? 'yes' : 'no'})`);
     return data;
   } catch (error) {
     console.error(`✗ Error submitting answer for ${playerId}:`, error.message);
@@ -157,7 +159,7 @@ async function simulateAllPlayersAnswer() {
       await wait(1000 + index * 500 + Math.random() * 2000);
       
       // Final check before submitting - make sure we're still on the same question
-      const finalStatus = await getGameState();
+      const finalStatus = await getGameStatus();
       if (finalStatus.currentQuestionIndex !== qIndex || finalStatus.phase !== 'answering') {
         console.log(`⚠ ${player.name}: Question changed, skipping answer`);
         return;

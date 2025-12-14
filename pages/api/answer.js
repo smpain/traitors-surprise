@@ -129,12 +129,16 @@ export default async function handler(req, res) {
   
   await saveGameState(updatedState);
 
+    // Get the answer info for this specific question
+    const answerInfo = updatedState.allAnswers[player] && updatedState.allAnswers[player][qIndex];
+    
     return res.json({ 
       success: true, 
       score: updatedState.players[player].score,
       allAnswered: allAnswered,
       phase: updatedState.phase,
-      currentQuestionIndex: updatedState.currentQuestionIndex
+      currentQuestionIndex: updatedState.currentQuestionIndex,
+      correct: answerInfo ? answerInfo.correct : isCorrect // Include correctness in response
     });
   } catch (error) {
     console.error('[ANSWER] Error:', error);
