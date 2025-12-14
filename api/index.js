@@ -410,19 +410,20 @@ app.post('/api/reset', (req, res) => {
 
 // Catch-all handler: serve index.html for any route that doesn't match API or static files
 // This must be after all API routes and static middleware
+// NOTE: Static files should be served by Vercel directly, not through Express
 app.get('*', (req, res, next) => {
   // Skip API routes - they should have been handled already
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({ error: 'API route not found' });
   }
   
-  // Skip static file extensions - if express.static didn't serve it, return 404
-  // Don't serve index.html for files that should be static assets
-  const staticExtensions = ['.css', '.js', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot', '.json'];
+  // Skip static file extensions - these should be served by Vercel directly
+  const staticExtensions = ['.css', '.js', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot', '.json', '.html'];
   const hasStaticExtension = staticExtensions.some(ext => req.path.toLowerCase().endsWith(ext));
   
-  if (hasStaticExtension) {
-    // This should have been served by express.static, so return 404
+  // Don't handle static files here - they should be served by Vercel's static file serving
+  // If we get here for a static file, it means Vercel routing didn't catch it
+  if (hasStaticExtension && !req.path.endsWith('index.html')) {
     return res.status(404).send('Static file not found');
   }
   
