@@ -37,7 +37,13 @@ export default async function handler(req, res) {
     }
     
     // Check if player already answered this question
-    if (playerState.answered) {
+    // BUT: Allow resubmission if answer was lost (answered flag is true but answer is missing)
+    const hasAnswerInAllAnswers = gameState.allAnswers[player] && 
+                                   gameState.allAnswers[player][qIndex];
+    const hasAnswerInCurrent = gameState.currentAnswers && 
+                                gameState.currentAnswers[player];
+    
+    if (playerState.answered && hasAnswerInAllAnswers && hasAnswerInCurrent) {
       console.log(`[ANSWER] ${player} already answered Q${qIndex + 1}, rejecting duplicate submission`);
       return res.json({ 
         success: false, 
@@ -47,6 +53,13 @@ export default async function handler(req, res) {
         phase: gameState.phase,
         currentQuestionIndex: qIndex
       });
+    }
+    
+    // If answered flag is true but answer is missing, allow resubmission
+    if (playerState.answered && (!hasAnswerInAllAnswers || !hasAnswerInCurrent)) {
+      console.warn(`[ANSWER] ${player} marked as answered but answer is missing! Allowing resubmission.`);
+      // Reset answered flag to allow resubmission
+      playerState.answered = false;
     }
   
     // Verify correctness on server side
@@ -77,7 +90,10 @@ export default async function handler(req, res) {
   
     // IMPORTANT: Save state BEFORE recalculating scores
     // recalculateScores() loads a fresh state, so we need to persist our changes first
-    await saveGameState(gameState);
+    const saveSuccess = await saveGameState(gameState);
+    if (!saveSuccess) {
+      console.error(`[ANSWER] ⚠️ Failed to save answer for ${player} - will retry after recalculation`);
+    }
     console.log(`[ANSWER] Saved state with answer before recalculating scores`);
   
   // Recalculate score from all answers (this will load fresh state and recalculate)
@@ -93,8 +109,10 @@ export default async function handler(req, res) {
   }
   
   // Double-check that our answer is still in allAnswers and currentAnswers
+  let answerWasLost = false;
   if (!updatedState.allAnswers[player] || !updatedState.allAnswers[player][qIndex]) {
     console.error(`⚠ ${player}'s answer was lost from allAnswers! Restoring...`);
+    answerWasLost = true;
     if (!updatedState.allAnswers[player]) {
       updatedState.allAnswers[player] = {};
     }
@@ -107,6 +125,7 @@ export default async function handler(req, res) {
   // Ensure currentAnswers has our answer
   if (!updatedState.currentAnswers || !updatedState.currentAnswers[player]) {
     console.warn(`⚠ ${player}'s answer missing from currentAnswers! Restoring...`);
+    answerWasLost = true;
     if (!updatedState.currentAnswers) {
       updatedState.currentAnswers = {};
     }
@@ -114,6 +133,12 @@ export default async function handler(req, res) {
       answerIndex: submittedIndex,
       correct: isCorrect
     };
+  }
+  
+  // If answer was lost, save again with retry
+  if (answerWasLost) {
+    console.log(`[ANSWER] Re-saving state after restoring lost answer for ${player}`);
+    await saveGameState(updatedState);
   }
   
   // Check if all players have answered
@@ -127,6 +152,7 @@ export default async function handler(req, res) {
     console.log(`[ANSWER] Waiting for: ${missing.map(p => updatedState.players[p].name).join(', ')}`);
   }
   
+  // Final save
   await saveGameState(updatedState);
 
     // Get the answer info for this specific question
