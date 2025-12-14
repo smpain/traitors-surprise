@@ -441,8 +441,5 @@ app.get('*', (req, res, next) => {
 });
 
 // Export the app for Vercel serverless functions
-// Vercel automatically wraps Express apps, but we can also export directly
+// Vercel automatically wraps Express apps
 module.exports = app;
-
-// Also export as handler for compatibility
-module.exports.handler = app;
