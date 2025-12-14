@@ -395,7 +395,8 @@ app.post('/api/reset', (req, res) => {
 
 // For Vercel: serve static files and index.html
 // In serverless, __dirname points to the function directory, so we need to go up one level
-const rootDir = path.join(__dirname, '..');
+// Use process.cwd() as fallback for Vercel serverless environment
+const rootDir = __dirname ? path.join(__dirname, '..') : process.cwd();
 
 // Serve static files (CSS, JS, images) - only if they reach Express
 // Vercel should serve these automatically, but this is a fallback
