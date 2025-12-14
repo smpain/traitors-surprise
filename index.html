@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>The Round Table — Birthday Mission</title>
+  <title>The Round Table — Christmas Mission</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
@@ -12,18 +12,68 @@
 <body>
   <div id="container">
     <header class="hero">
-      <div class="crest">T</div>
+      <button id="resetBtn" class="btn reset-btn hidden">Reset Game</button>
+      <div class="crest" id="crest">
+        <svg class="crest-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <!-- Pie chart background circle -->
+          <circle class="crest-bg" cx="50" cy="50" r="45" fill="none" stroke="rgba(199, 166, 69, 0.2)" stroke-width="4"/>
+          <!-- Progress arc (will be updated via JS) -->
+          <circle class="crest-progress" cx="50" cy="50" r="45" fill="none" stroke="#c7a645" stroke-width="4" 
+                  stroke-dasharray="282.74" stroke-dashoffset="282.74" transform="rotate(-90 50 50)"/>
+          <!-- Complete icon (gold circle with black T, shown when complete) -->
+          <g class="round-table-icon" opacity="0">
+            <circle cx="50" cy="50" r="35" fill="#c7a645"/>
+            <text x="50" y="62" font-family="Cinzel" font-size="48" font-weight="700" fill="#000000" text-anchor="middle">T</text>
+          </g>
+          <!-- Letter T (shown during progress) -->
+          <text class="crest-letter" x="50" y="65" font-family="Cinzel" font-size="40" font-weight="700" fill="#c7a645" text-anchor="middle">T</text>
+        </svg>
+      </div>
       <h1>Take your seat at the Round Table</h1>
-      <p class="tag">A birthday mission awaits. Are you Faithful… or something else?</p>
+      <p class="tag">A Christmas mission awaits. Are you Faithful… or Traitor?</p>
     </header>
 
     <main>
-      <section id="mission" class="card">
-        <h2>Birthday Mission for Bea</h2>
+      <section id="playerSelection" class="card">
+        <h2>Choose Your Identity</h2>
+        <p>Select who you are to begin your mission at the Round Table.</p>
+        <div class="player-buttons">
+          <button id="selectEti" class="btn player-btn">Eti</button>
+          <button id="selectJude" class="btn player-btn">Jude</button>
+          <button id="selectNathalie" class="btn player-btn">Nathalie</button>
+          <button id="selectGareth" class="btn player-btn">Gareth</button>
+        </div>
+        
+        <div id="simulatePanel" class="simulate-panel">
+          <h3>Test Mode: Simulate Players</h3>
+          <p class="simulate-help">Toggle players to simulate mode to auto-generate answers for testing.</p>
+          <div class="simulate-controls">
+            <label class="simulate-toggle">
+              <input type="checkbox" id="simulateEti" data-player="eti">
+              <span>Simulate Eti</span>
+            </label>
+            <label class="simulate-toggle">
+              <input type="checkbox" id="simulateJude" data-player="jude">
+              <span>Simulate Jude</span>
+            </label>
+            <label class="simulate-toggle">
+              <input type="checkbox" id="simulateNathalie" data-player="nathalie">
+              <span>Simulate Nathalie</span>
+            </label>
+            <label class="simulate-toggle">
+              <input type="checkbox" id="simulateGareth" data-player="gareth">
+              <span>Simulate Gareth</span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <section id="mission" class="card hidden">
+        <div id="leaderboard"></div>
+        <h2>Christmas Mission</h2>
         <p>
-          Bea, your task is to answer a few quick questions at the Round Table.
+          Your task is to answer questions about The Traitors UK at the Round Table.
           When you succeed, your classified briefing will appear.
-          You’ll be joined by Mum, Dad and Ben.
         </p>
         <div id="quiz" class="quiz" aria-label="Quiz" role="group">
           <div id="question" class="question"></div>
@@ -33,22 +83,26 @@
           </div>
           <div id="quizProgress" class="progress"></div>
         </div>
+        <div id="waiting" class="waiting hidden">
+          <p>Waiting for other players to answer...</p>
+        </div>
+        <div id="results" class="results hidden"></div>
       </section>
 
       <section id="voucher" class="card voucher hidden" aria-live="polite">
         <h2>Classified Briefing</h2>
-        <p class="lead">Mission accomplished, Bea. Your surprise is revealed.</p>
+        <p class="lead">Mission accomplished! Your surprise is revealed.</p>
+        
+        <div id="finalScores" class="final-scores"></div>
+        
         <div class="ticket">
-          <div class="stamp">APPROVED</div>
-          <h3>Birthday Voucher</h3>
+          <div class="stamp pop">APPROVED</div>
+          <h3>Christmas Voucher</h3>
           <p>
-            Happy 14th Birthday, Bea! Your present is an unforgettable experience at
+            Merry Christmas, Eti, Jude, Nathalie and Gareth! Your present is an unforgettable experience at
             <strong>The Traitors: Live Experience</strong> in Covent Garden, London.
           </p>
-          <p>
-            Guests: Mum, Dad and Ben.
-          </p>
-          <p><strong>Date:</strong> 28th September, 10am</p>
+          <p><strong>Date:</strong> 11th January, 10am</p>
           <p>Get ready for deception, strategy and fun!</p>
           <a class="btn" href="https://www.thetraitorslive.co.uk" target="_blank" rel="noopener noreferrer">Learn about the experience</a>
         </div>
@@ -56,11 +110,12 @@
     </main>
 
     <footer>
-      <small>Inspired by The Traitors: Live Experience.</small>
+      <small></small>
     </footer>
   </div>
 
-  <script src="assets/js/app.js" defer></script>
+  <canvas id="confetti"></canvas>
+  <script type="module" src="assets/js/app.js"></script>
 </body>
 </html>
 

@@ -1,62 +1,74 @@
 # Traitors Surprise
 
-A self-contained static mini-site for a birthday surprise themed around "The Traitors: Live Experience". This interactive quiz reveals a birthday voucher upon completion.
+A Christmas gift interactive quiz for Eti and Jude themed around "The Traitors UK" series. This competitive quiz allows two players to answer questions simultaneously and see real-time leaderboard updates.
 
 ## Features
 
-- Interactive quiz with Traitors-themed questions
-- Beautiful, dark-themed UI with gold accents
-- Confetti animation on voucher reveal
-- Fully static - no backend required
-- Mobile-responsive design
+- **UK Traitors trivia questions** with varying difficulty levels
+- **Two-player competitive mode** - Eti vs Jude
+- **Randomized question order** - each player gets questions in a different order
+- **Real-time leaderboard** - see who's winning as you play
+- **Beautiful, dark-themed UI** with gold accents
+- **Confetti animation** on voucher reveal
+- **Backend score tracking** - scores sync between both players' devices
 
-## Contents
+## Setup
 
-- `index.html` — Main page with quiz game
-- `voucher.html` — Direct link to voucher page with confetti
-- `assets/css/style.css` — Traitors-inspired styling
-- `assets/js/app.js` — Quiz game logic
-
-## Local Development
-
-### Quick Start
-
-Simply open `index.html` in a browser, or serve the folder with a simple HTTP server:
+### Install Dependencies
 
 ```bash
-# From inside the traitors-surprise directory
-python3 -m http.server 8081
+npm install
 ```
 
-Then open `http://localhost:8081` in your browser.
+### Run the Server
 
-## Deployment
+```bash
+npm start
+```
 
-This site can be deployed to any static hosting service:
+The server will run on `http://localhost:3000` by default. You can change the port by setting the `PORT` environment variable.
 
-- **GitHub Pages**: Enable in repository settings
-- **Netlify**: Drag and drop the folder
-- **Vercel**: Deploy via CLI or dashboard
-- **Any static host**: Upload the files to your web server
+### Access the Quiz
 
-### Deployment Tips
+Open `http://localhost:3000` in two different browsers or devices (one for Eti, one for Jude).
 
-- Generate a QR code pointing to the deployed URL for easy mobile access
-- The site works offline once loaded (no external dependencies except Google Fonts)
+Each player selects their identity when starting, and questions are randomized per player. The leaderboard updates every 2 seconds showing current scores.
 
 ## Project Structure
 
 ```
 traitors-surprise/
-├── index.html          # Main quiz page
-├── voucher.html        # Voucher reveal page
+├── server.js              # Express backend server
+├── package.json           # Node.js dependencies
+├── index.html             # Main quiz page
+├── voucher.html           # Voucher reveal page
 ├── assets/
 │   ├── css/
-│   │   └── style.css   # All styles
+│   │   └── style.css      # All styles
 │   └── js/
-│       └── app.js      # Quiz logic
-└── README.md           # This file
+│       ├── app.js         # Main quiz logic
+│       └── questions.js   # Question bank
+└── README.md              # This file
 ```
+
+## API Endpoints
+
+- `GET /api/leaderboard` - Get current scores for both players
+- `POST /api/answer` - Submit an answer (body: `{ player, correct, questionIndex }`)
+- `POST /api/complete` - Mark a player as completed (body: `{ player }`)
+- `POST /api/reset` - Reset game state (useful for testing)
+
+## Deployment
+
+For production deployment, you'll need a Node.js hosting service:
+
+- **Heroku**: Deploy via Git
+- **Railway**: Connect GitHub repo
+- **Render**: Deploy from GitHub
+- **Vercel**: Use serverless functions
+- **DigitalOcean App Platform**: Deploy from GitHub
+
+Make sure to set the server to listen on the port provided by your hosting service (usually via `process.env.PORT`).
 
 ## License
 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Classified Briefing — Voucher</title>
+  <title>Classified Briefing — Christmas Voucher</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
@@ -20,31 +20,44 @@
   <canvas id="confetti"></canvas>
   <div id="container">
     <header class="hero">
-      <div class="crest">T</div>
+      <div class="crest complete">
+        <svg class="crest-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <!-- Pie chart background circle -->
+          <circle class="crest-bg" cx="50" cy="50" r="45" fill="none" stroke="rgba(199, 166, 69, 0.2)" stroke-width="4"/>
+          <!-- Progress arc (full) -->
+          <circle class="crest-progress" cx="50" cy="50" r="45" fill="none" stroke="#c7a645" stroke-width="4" 
+                  stroke-dasharray="282.74" stroke-dashoffset="0" transform="rotate(-90 50 50)"/>
+          <!-- Complete icon (gold circle with black T) -->
+          <g class="round-table-icon" opacity="1">
+            <circle cx="50" cy="50" r="35" fill="#c7a645"/>
+            <text x="50" y="62" font-family="Cinzel" font-size="48" font-weight="700" fill="#000000" text-anchor="middle">T</text>
+          </g>
+          <!-- Letter T (hidden when complete) -->
+          <text class="crest-letter" x="50" y="65" font-family="Cinzel" font-size="40" font-weight="700" fill="#c7a645" text-anchor="middle" opacity="0">T</text>
+        </svg>
+      </div>
       <h1>Classified Briefing</h1>
-      <p class="tag">Mission accomplished, Bea.</p>
+      <p class="tag">Mission accomplished!</p>
     </header>
 
     <main>
       <section class="card voucher reveal">
         <div class="ticket">
           <div class="stamp pop">APPROVED</div>
-          <h2>Birthday Voucher</h2>
+          <h2>Christmas Voucher</h2>
           <p>
-            Happy 14th Birthday, Bea! Your present is an unforgettable experience at
+            Merry Christmas, Eti, Jude, Nathalie and Gareth! Your present is an unforgettable experience at
             <strong>The Traitors: Live Experience</strong> in Covent Garden, London.
           </p>
-          <p>
-            Guests: Mum, Dad and Ben. Get ready for deception, strategy and fun!
-          </p>
-          <p><strong>Date:</strong> 28th September, 10am</p>
+          <p>Get ready for deception, strategy and fun!</p>
+          <p><strong>Date:</strong> 11th January, 10am</p>
           <a class="btn" href="https://www.thetraitorslive.co.uk" target="_blank" rel="noopener noreferrer">Learn about the experience</a>
         </div>
       </section>
     </main>
 
     <footer>
-      <small>Inspired by The Traitors: Live Experience.</small>
+      <small></small>
     </footer>
   </div>
 
