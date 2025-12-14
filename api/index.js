@@ -9,6 +9,10 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+// Serve static files from the root directory
+const rootDir = path.join(__dirname, '..');
+app.use(express.static(rootDir));
+
 const questions = questionsData.allQuestions;
 
 // Store game state in memory
