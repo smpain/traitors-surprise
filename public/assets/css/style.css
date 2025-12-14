@@ -185,11 +185,30 @@ footer{margin-top:24px;color:var(--muted);text-align:center}
   font-size: 16px;
 }
 
+/* Mobile: smaller name text */
+@media (max-width: 600px) {
+  .score-name {
+    font-size: 13px;
+  }
+}
+
 .score-value {
   font-family: 'Cinzel', serif;
   font-size: 24px;
   font-weight: 700;
   color: var(--gold);
+}
+
+/* Mobile: smaller score value and reduced padding */
+@media (max-width: 600px) {
+  .score-item {
+    padding: 8px 4px;
+    gap: 2px;
+  }
+  
+  .score-value {
+    font-size: 20px;
+  }
 }
 
 .leaderboard-status {
