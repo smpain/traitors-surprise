@@ -112,10 +112,25 @@ footer{margin-top:24px;color:var(--muted);text-align:center}
   border-radius: 12px;
 }
 
+/* Mobile: reduce padding and margins */
+@media (max-width: 600px) {
+  #leaderboard {
+    margin-bottom: 12px;
+    padding: 10px 12px;
+  }
+}
+
 .leaderboard-content {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+/* Mobile: reduce gap */
+@media (max-width: 600px) {
+  .leaderboard-content {
+    gap: 8px;
+  }
 }
 
 .leaderboard-header {
@@ -126,10 +141,25 @@ footer{margin-top:24px;color:var(--muted);text-align:center}
   font-size: 18px;
 }
 
+/* Mobile: smaller header */
+@media (max-width: 600px) {
+  .leaderboard-header {
+    font-size: 16px;
+    margin-bottom: -4px;
+  }
+}
+
 .leaderboard-scores {
   display: flex;
   justify-content: space-around;
   gap: 16px;
+}
+
+/* Mobile: reduce gap between score items */
+@media (max-width: 600px) {
+  .leaderboard-scores {
+    gap: 8px;
+  }
 }
 
 .score-item {
