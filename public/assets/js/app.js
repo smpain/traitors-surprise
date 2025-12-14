@@ -33,6 +33,7 @@ const playerNames = {
 async function selectPlayer(playerName) {
   currentPlayer = playerName.toLowerCase();
   localStorage.setItem('traitors_player', currentPlayer);
+  highestQuestionIndexSeen = -1; // Reset tracking
   
   // Check if player has previous answers (reconnection)
   try {
@@ -41,6 +42,7 @@ async function selectPlayer(playerName) {
       const playerState = await response.json();
       // Score is already calculated on server, just continue
       console.log(`Reconnected as ${playerState.name}, score: ${playerState.score}, at question ${playerState.currentQuestionIndex + 1}`);
+      highestQuestionIndexSeen = playerState.currentQuestionIndex;
     }
   } catch (error) {
     console.error('Error fetching player state:', error);
