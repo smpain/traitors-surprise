@@ -1,7 +1,15 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const questionsData = require('../questions-data.js');
+
+// Load questions data with error handling
+let questionsData;
+try {
+  questionsData = require('../questions-data.js');
+} catch (err) {
+  console.error('Error loading questions-data.js:', err);
+  throw err;
+}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
