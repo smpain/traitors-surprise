@@ -9,8 +9,8 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// Note: Static files (CSS, JS, images) are served by Vercel directly via vercel.json routes
-// Express only handles API routes and index.html fallback for SPA routing
+// This Express app only handles API routes
+// Static files (CSS, JS, HTML) are served directly by Vercel
 
 const questions = questionsData.allQuestions;
 
@@ -398,33 +398,8 @@ app.post('/api/reset', (req, res) => {
 const rootDir = path.join(__dirname, '..');
 const serveStatic = express.static(rootDir, { index: false });
 
-// Catch-all handler: serve static files or index.html
-app.get('*', (req, res, next) => {
-  // Skip API routes - they should have been handled already
-  if (req.path.startsWith('/api/')) {
-    return res.status(404).json({ error: 'API route not found' });
-  }
-  
-  // Try to serve as static file first
-  const staticExtensions = ['.css', '.js', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot', '.json'];
-  const hasStaticExtension = staticExtensions.some(ext => req.path.toLowerCase().endsWith(ext));
-  
-  if (hasStaticExtension) {
-    // Try to serve the static file
-    return serveStatic(req, res, () => {
-      // File not found, return 404
-      res.status(404).send('File not found');
-    });
-  }
-  
-  // For all other routes, serve index.html (SPA fallback)
-  res.sendFile(path.join(rootDir, 'index.html'), (err) => {
-    if (err) {
-      console.error('Error sending index.html:', err);
-      res.status(404).send('File not found');
-    }
-  });
-});
+// This Express app only handles API routes - no catch-all needed
+// Static files and index.html are served directly by Vercel
 
 // Export the app for Vercel serverless functions
 module.exports = app;
