@@ -1,4 +1,4 @@
-import { getGameState, autoAnswerSimulatedPlayers } from '../../lib/gameState';
+import { getGameState, saveGameState, autoAnswerSimulatedPlayers, allPlayersAnswered } from '../../lib/gameState';
 
 export default async function handler(req, res) {
   try {
@@ -6,7 +6,7 @@ export default async function handler(req, res) {
       return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const gameState = await getGameState();
+    let gameState = await getGameState();
     
     if (!gameState) {
       console.error('[GAME-STATUS] Failed to load game state');
@@ -17,6 +17,15 @@ export default async function handler(req, res) {
     
     // Log state for debugging
     console.log(`[GAME-STATUS] Q${gameState.currentQuestionIndex + 1}, phase=${gameState.phase}, answered: ${players.filter(p => p.answered).map(p => p.name).join(',') || 'none'}`);
+    
+    // Fix state inconsistency: if all players answered but phase is still 'answering', fix it
+    const allAnswered = players.every(p => p.answered === true);
+    if (gameState.phase === 'answering' && allAnswered) {
+      console.warn(`[GAME-STATUS] ⚠️ State inconsistency detected: All players answered but phase is still 'answering'. Fixing...`);
+      gameState.phase = 'showing-results';
+      await saveGameState(gameState);
+      console.log(`[GAME-STATUS] ✓ Fixed: Phase set to 'showing-results'`);
+    }
     
     // Trigger auto-answer for simulated players when a new question starts
     if (gameState.phase === 'answering') {
@@ -34,12 +43,6 @@ export default async function handler(req, res) {
       })),
       currentAnswers: gameState.currentAnswers
     };
-    
-    // Debug check for state inconsistency
-    const allAnswered = players.every(p => p.answered === true);
-    if (gameState.phase === 'answering' && allAnswered) {
-      console.warn(`[GAME-STATUS] State inconsistency: All players answered but phase is still 'answering'`);
-    }
     
     // Check if state was reset (question index went backwards)
     if (req.headers['x-game-question-index']) {
