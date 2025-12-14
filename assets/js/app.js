@@ -514,9 +514,12 @@ playerButtons.forEach(player => {
 
 // Check if we're on localhost
 function isLocalhost() {
-  return window.location.hostname === 'localhost' || 
-         window.location.hostname === '127.0.0.1' ||
-         window.location.hostname === '';
+  const hostname = window.location.hostname;
+  return hostname === 'localhost' || 
+         hostname === '127.0.0.1' ||
+         hostname === '' ||
+         hostname.startsWith('127.') ||
+         hostname.includes('.local');
 }
 
 // Show/hide simulate panel based on hostname

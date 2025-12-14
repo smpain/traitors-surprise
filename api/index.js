@@ -11,7 +11,16 @@ app.use(express.json());
 
 // Serve static files from the root directory
 const rootDir = path.join(__dirname, '..');
-app.use(express.static(rootDir));
+// Use express.static with explicit root directory and index option
+app.use(express.static(rootDir, {
+  index: 'index.html',
+  setHeaders: (res, filePath) => {
+    // Set proper content-type for CSS files
+    if (filePath.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css');
+    }
+  }
+}));
 
 const questions = questionsData.allQuestions;
 
