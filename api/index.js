@@ -429,4 +429,5 @@ app.get('*', (req, res, next) => {
 });
 
 // Export the app for Vercel serverless functions
+// Vercel automatically wraps Express apps
 module.exports = app;
