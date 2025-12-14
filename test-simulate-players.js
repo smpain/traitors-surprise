@@ -100,8 +100,6 @@ function wait(ms) {
 
 // Simulate all players answering the current question
 async function simulateAllPlayersAnswer() {
-  console.log(`\n📋 Simulating players for question ${currentQuestionIndex + 1}...`);
-  
   const status = await getGameStatus();
   currentQuestionIndex = status.currentQuestionIndex;
   
@@ -113,13 +111,19 @@ async function simulateAllPlayersAnswer() {
   // Check which players haven't answered
   const unansweredPlayers = players.filter(p => {
     const playerStatus = status.players.find(ps => ps.name.toLowerCase() === p.id);
-    return !playerStatus || !playerStatus.answered;
+    const hasAnswered = playerStatus && playerStatus.answered === true;
+    if (hasAnswered) {
+      console.log(`⏭ Skipping ${p.name} - already answered`);
+    }
+    return !hasAnswered;
   });
   
   if (unansweredPlayers.length === 0) {
     console.log('✓ All simulated players have already answered');
     return;
   }
+  
+  console.log(`\n📋 Simulating ${unansweredPlayers.length} player(s) for question ${currentQuestionIndex + 1}...`);
   
   // Get the current question to determine correct answer
   const currentQuestion = questions[currentQuestionIndex];
@@ -188,6 +192,9 @@ async function main() {
         
         if (needsAnswer) {
           await simulateAllPlayersAnswer();
+        } else {
+          // All players have answered, just wait quietly
+          // (don't log anything to avoid spam)
         }
       }
       
