@@ -71,7 +71,13 @@ async function simulatePlayerAnswer(playerId, questionIndex, answerIndex) {
     }
     
     const data = await response.json();
-    console.log(`✓ ${playerId} answered question ${questionIndex + 1} with answer ${answerIndex} (correct: ${data.score > 0 ? 'yes' : 'no'})`);
+    
+    // Check if answer was rejected (e.g., already answered)
+    if (data.success === false) {
+      return data; // Return the rejection response
+    }
+    
+    console.log(`✓ ${playerId} answered question ${questionIndex + 1} with answer ${answerIndex} (correct: ${data.score !== undefined && data.score > 0 ? 'yes' : 'no'})`);
     return data;
   } catch (error) {
     console.error(`✗ Error submitting answer for ${playerId}:`, error.message);
@@ -104,93 +110,97 @@ let currentSimulatingQuestion = -1;
 
 // Simulate all players answering the current question
 async function simulateAllPlayersAnswer() {
-  // Prevent concurrent simulation runs
+  // Prevent concurrent simulation runs - check and set lock atomically
   if (isSimulating) {
     return;
   }
   
-  const status = await getGameStatus();
-  const qIndex = status.currentQuestionIndex;
-  
-  // If we're already simulating this question, skip
-  if (isSimulating && currentSimulatingQuestion === qIndex) {
-    return;
-  }
-  
-  if (status.phase !== 'answering') {
-    console.log(`⚠ Game is in phase "${status.phase}", not answering. Skipping.`);
-    return;
-  }
-  
-  // Check which players haven't answered
-  const unansweredPlayers = players.filter(p => {
-    const playerStatus = status.players.find(ps => ps.name.toLowerCase() === p.id);
-    const hasAnswered = playerStatus && playerStatus.answered === true;
-    if (hasAnswered) {
-      console.log(`⏭ Skipping ${p.name} - already answered`);
-    }
-    return !hasAnswered;
-  });
-  
-  if (unansweredPlayers.length === 0) {
-    console.log('✓ All simulated players have already answered');
-    return;
-  }
-  
-  // Set lock
+  // Set lock IMMEDIATELY to prevent concurrent runs
   isSimulating = true;
-  currentSimulatingQuestion = qIndex;
-  console.log(`\n📋 Simulating ${unansweredPlayers.length} player(s) for question ${qIndex + 1}...`);
   
-  // Get the current question to determine correct answer
-  const currentQuestion = questions[qIndex];
-  const numChoices = currentQuestion ? currentQuestion.choices.length : 3;
-  
-  // Simulate each player answering with random delays (1-3 seconds)
-  const promises = unansweredPlayers.map(async (player, index) => {
-    // Stagger the answers slightly
-    await wait(1000 + index * 500 + Math.random() * 2000);
+  try {
+    const status = await getGameStatus();
+    const qIndex = status.currentQuestionIndex;
     
-    // Final check before submitting - make sure we're still on the same question
-    const finalStatus = await getGameStatus();
-    if (finalStatus.currentQuestionIndex !== qIndex || finalStatus.phase !== 'answering') {
-      console.log(`⚠ ${player.name}: Question changed, skipping answer`);
+    // Update the question we're simulating
+    currentSimulatingQuestion = qIndex;
+    
+    if (status.phase !== 'answering') {
+      console.log(`⚠ Game is in phase "${status.phase}", not answering. Skipping.`);
       return;
     }
     
-    // Check if player already answered (might have been answered by another instance)
-    const playerStatus = finalStatus.players.find(ps => ps.name.toLowerCase() === player.id);
-    if (playerStatus && playerStatus.answered) {
-      console.log(`⏭ ${player.name}: Already answered, skipping`);
+    // Check which players haven't answered
+    const unansweredPlayers = players.filter(p => {
+      const playerStatus = status.players.find(ps => ps.name.toLowerCase() === p.id);
+      const hasAnswered = playerStatus && playerStatus.answered === true;
+      if (hasAnswered) {
+        console.log(`⏭ Skipping ${p.name} - already answered`);
+      }
+      return !hasAnswered;
+    });
+    
+    if (unansweredPlayers.length === 0) {
+      console.log('✓ All simulated players have already answered');
       return;
     }
     
-    // Pick an answer - mix of correct and incorrect for realism
-    // 70% chance of correct answer, 30% chance of wrong answer
-    let answerIndex;
-    if (currentQuestion && Math.random() < 0.7) {
-      // Answer correctly
-      answerIndex = currentQuestion.answerIndex;
-    } else {
-      // Answer incorrectly (pick a random wrong answer)
-      const wrongAnswers = Array.from({ length: numChoices }, (_, i) => i)
-        .filter(i => !currentQuestion || i !== currentQuestion.answerIndex);
-      answerIndex = wrongAnswers[Math.floor(Math.random() * wrongAnswers.length)] || 0;
-    }
-    
-    try {
-      await simulatePlayerAnswer(player.id, qIndex, answerIndex);
-    } catch (error) {
-      console.error(`Failed to simulate ${player.id}:`, error.message);
-    }
-  });
+    console.log(`\n📋 Simulating ${unansweredPlayers.length} player(s) for question ${qIndex + 1}...`);
   
-  await Promise.all(promises);
+    // Get the current question to determine correct answer
+    const currentQuestion = questions[qIndex];
+    const numChoices = currentQuestion ? currentQuestion.choices.length : 3;
   
-  // Release lock
-  isSimulating = false;
-  currentSimulatingQuestion = -1;
-  console.log('✓ Simulation complete\n');
+    // Simulate each player answering with random delays (1-3 seconds)
+    const promises = unansweredPlayers.map(async (player, index) => {
+      // Stagger the answers slightly
+      await wait(1000 + index * 500 + Math.random() * 2000);
+      
+      // Final check before submitting - make sure we're still on the same question
+      const finalStatus = await getGameState();
+      if (finalStatus.currentQuestionIndex !== qIndex || finalStatus.phase !== 'answering') {
+        console.log(`⚠ ${player.name}: Question changed, skipping answer`);
+        return;
+      }
+      
+      // Check if player already answered (might have been answered by another instance)
+      const playerStatus = finalStatus.players.find(ps => ps.name.toLowerCase() === player.id);
+      if (playerStatus && playerStatus.answered) {
+        console.log(`⏭ ${player.name}: Already answered, skipping`);
+        return;
+      }
+      
+      // Pick an answer - mix of correct and incorrect for realism
+      // 70% chance of correct answer, 30% chance of wrong answer
+      let answerIndex;
+      if (currentQuestion && Math.random() < 0.7) {
+        // Answer correctly
+        answerIndex = currentQuestion.answerIndex;
+      } else {
+        // Answer incorrectly (pick a random wrong answer)
+        const wrongAnswers = Array.from({ length: numChoices }, (_, i) => i)
+          .filter(i => !currentQuestion || i !== currentQuestion.answerIndex);
+        answerIndex = wrongAnswers[Math.floor(Math.random() * wrongAnswers.length)] || 0;
+      }
+      
+      try {
+        const result = await simulatePlayerAnswer(player.id, qIndex, answerIndex);
+        // Check if the answer was rejected (already answered)
+        if (result && result.success === false) {
+          console.log(`⏭ ${player.name}: ${result.message || 'Answer rejected'}`);
+        }
+      } catch (error) {
+        console.error(`Failed to simulate ${player.id}:`, error.message);
+      }
+    });
+  
+    await Promise.all(promises);
+    console.log('✓ Simulation complete\n');
+  } finally {
+    // Always release lock, even if there's an error
+    isSimulating = false;
+    currentSimulatingQuestion = -1;
+  }
 }
 
 // Main loop - continuously monitor and simulate

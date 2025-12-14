@@ -32,33 +32,46 @@ export default async function handler(req, res) {
     const qIndex = gameState.currentQuestionIndex;
     const question = questions[qIndex];
   
-  if (!question) {
-    return res.status(400).json({ error: 'Invalid question index' });
-  }
+    if (!question) {
+      return res.status(400).json({ error: 'Invalid question index' });
+    }
+    
+    // Check if player already answered this question
+    if (playerState.answered) {
+      console.log(`[ANSWER] ${player} already answered Q${qIndex + 1}, rejecting duplicate submission`);
+      return res.json({ 
+        success: false, 
+        message: 'Already answered this question',
+        score: playerState.score,
+        allAnswered: await allPlayersAnswered(),
+        phase: gameState.phase,
+        currentQuestionIndex: qIndex
+      });
+    }
   
-  // Verify correctness on server side
-  const submittedIndex = parseInt(answerIndex);
-  const isCorrect = submittedIndex === question.answerIndex;
+    // Verify correctness on server side
+    const submittedIndex = parseInt(answerIndex);
+    const isCorrect = submittedIndex === question.answerIndex;
   
-  // Store the answer for current question
-  gameState.currentAnswers[player] = {
-    answerIndex: submittedIndex,
-    correct: isCorrect
-  };
+    // Store the answer for current question
+    gameState.currentAnswers[player] = {
+      answerIndex: submittedIndex,
+      correct: isCorrect
+    };
   
-  // Store permanently in allAnswers
-  if (!gameState.allAnswers[player]) {
-    gameState.allAnswers[player] = {};
-  }
-  gameState.allAnswers[player][qIndex] = {
-    answerIndex: submittedIndex,
-    correct: isCorrect
-  };
+    // Store permanently in allAnswers
+    if (!gameState.allAnswers[player]) {
+      gameState.allAnswers[player] = {};
+    }
+    gameState.allAnswers[player][qIndex] = {
+      answerIndex: submittedIndex,
+      correct: isCorrect
+    };
   
-  console.log(`[ANSWER] ${player} submitting answer ${answerIndex} for Q${qIndex + 1}`);
+    console.log(`[ANSWER] ${player} submitting answer ${answerIndex} for Q${qIndex + 1}`);
   
-  // Set answered flag FIRST, before any recalculation
-  gameState.players[player].answered = true;
+    // Set answered flag FIRST, before any recalculation
+    gameState.players[player].answered = true;
   
   // Recalculate score from all answers
   await recalculateScores();

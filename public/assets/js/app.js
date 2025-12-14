@@ -196,14 +196,10 @@ async function render() {
   const { q, choices } = allQuestions[currentQuestionIndex];
   questionEl.textContent = q;
   optionsEl.innerHTML = '';
-  // Don't disable nextBtn here - let the logic below determine its state
+  nextBtn.disabled = true;
+  selected = -1;
   progressEl.textContent = `Question ${currentQuestionIndex + 1} of ${allQuestions.length}`;
   hideWaitingMessage();
-
-  // Reset selected if we're rendering fresh
-  if (!myAnswerSubmitted) {
-    selected = -1;
-  }
 
   // Check if we've already answered this question (for reconnection)
   if (!myAnswerSubmitted) {
@@ -240,11 +236,6 @@ async function render() {
 
   // Normal render - we haven't answered yet
   console.log(`Rendering fresh question ${currentQuestionIndex + 1} - no previous answer`);
-  // Reset state for fresh question
-  myAnswerSubmitted = false;
-  selected = -1;
-  nextBtn.disabled = true; // Disabled until an option is selected
-  
   choices.forEach((label, i) => {
     const btn = document.createElement('button');
     btn.className = 'option';
