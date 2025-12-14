@@ -588,9 +588,9 @@ function toggleResetButton() {
   const resetBtn = document.getElementById('resetBtn');
   if (resetBtn) {
     if (isLocalhost()) {
-      resetBtn.classList.remove('hidden');
+      resetBtn.style.display = 'block';
     } else {
-      resetBtn.classList.add('hidden');
+      resetBtn.style.display = 'none';
     }
   }
 }

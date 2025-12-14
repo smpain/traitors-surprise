@@ -11,15 +11,20 @@ app.use(express.json());
 
 // Serve static files from the root directory
 const rootDir = path.join(__dirname, '..');
-// Use express.static with explicit root directory and index option
+
+// Serve static files with proper middleware order
+// This must come BEFORE the API routes so static files are served first
 app.use(express.static(rootDir, {
-  index: 'index.html',
+  index: false, // Don't serve index.html automatically, we'll handle it
   setHeaders: (res, filePath) => {
-    // Set proper content-type for CSS files
+    // Set proper content-type headers
     if (filePath.endsWith('.css')) {
-      res.setHeader('Content-Type', 'text/css');
+      res.setHeader('Content-Type', 'text/css; charset=utf-8');
+    } else if (filePath.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
     }
-  }
+  },
+  maxAge: '1d' // Cache static assets
 }));
 
 const questions = questionsData.allQuestions;
