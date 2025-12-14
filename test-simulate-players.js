@@ -98,10 +98,24 @@ function wait(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+// Track if we're currently simulating to prevent duplicate runs
+let isSimulating = false;
+let currentSimulatingQuestion = -1;
+
 // Simulate all players answering the current question
 async function simulateAllPlayersAnswer() {
+  // Prevent concurrent simulation runs
+  if (isSimulating) {
+    return;
+  }
+  
   const status = await getGameStatus();
-  currentQuestionIndex = status.currentQuestionIndex;
+  const qIndex = status.currentQuestionIndex;
+  
+  // If we're already simulating this question, skip
+  if (isSimulating && currentSimulatingQuestion === qIndex) {
+    return;
+  }
   
   if (status.phase !== 'answering') {
     console.log(`⚠ Game is in phase "${status.phase}", not answering. Skipping.`);
@@ -123,16 +137,33 @@ async function simulateAllPlayersAnswer() {
     return;
   }
   
-  console.log(`\n📋 Simulating ${unansweredPlayers.length} player(s) for question ${currentQuestionIndex + 1}...`);
+  // Set lock
+  isSimulating = true;
+  currentSimulatingQuestion = qIndex;
+  console.log(`\n📋 Simulating ${unansweredPlayers.length} player(s) for question ${qIndex + 1}...`);
   
   // Get the current question to determine correct answer
-  const currentQuestion = questions[currentQuestionIndex];
+  const currentQuestion = questions[qIndex];
   const numChoices = currentQuestion ? currentQuestion.choices.length : 3;
   
   // Simulate each player answering with random delays (1-3 seconds)
   const promises = unansweredPlayers.map(async (player, index) => {
     // Stagger the answers slightly
     await wait(1000 + index * 500 + Math.random() * 2000);
+    
+    // Final check before submitting - make sure we're still on the same question
+    const finalStatus = await getGameStatus();
+    if (finalStatus.currentQuestionIndex !== qIndex || finalStatus.phase !== 'answering') {
+      console.log(`⚠ ${player.name}: Question changed, skipping answer`);
+      return;
+    }
+    
+    // Check if player already answered (might have been answered by another instance)
+    const playerStatus = finalStatus.players.find(ps => ps.name.toLowerCase() === player.id);
+    if (playerStatus && playerStatus.answered) {
+      console.log(`⏭ ${player.name}: Already answered, skipping`);
+      return;
+    }
     
     // Pick an answer - mix of correct and incorrect for realism
     // 70% chance of correct answer, 30% chance of wrong answer
@@ -148,14 +179,18 @@ async function simulateAllPlayersAnswer() {
     }
     
     try {
-      await simulatePlayerAnswer(player.id, currentQuestionIndex, answerIndex);
+      await simulatePlayerAnswer(player.id, qIndex, answerIndex);
     } catch (error) {
       console.error(`Failed to simulate ${player.id}:`, error.message);
     }
   });
   
   await Promise.all(promises);
-  console.log('✓ All players simulated\n');
+  
+  // Release lock
+  isSimulating = false;
+  currentSimulatingQuestion = -1;
+  console.log('✓ Simulation complete\n');
 }
 
 // Main loop - continuously monitor and simulate
