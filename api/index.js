@@ -9,10 +9,6 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// Serve static files from the root directory
-const rootDir = path.join(__dirname, '..');
-app.use(express.static(rootDir));
-
 const questions = questionsData.allQuestions;
 
 // Store game state in memory
@@ -394,16 +390,6 @@ app.post('/api/reset', (req, res) => {
   res.json({ success: true });
 });
 
-// Catch-all handler: serve index.html for any non-API route
-// This must be after all API routes
-app.get('*', (req, res, next) => {
-  // Skip if it's an API route (should have been handled already)
-  if (req.path.startsWith('/api/')) {
-    return res.status(404).json({ error: 'API route not found' });
-  }
-  // Serve index.html for all other routes (SPA fallback)
-  res.sendFile(path.join(__dirname, '..', 'index.html'));
-});
 
 // Export the app for Vercel serverless functions
 module.exports = app;
