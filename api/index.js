@@ -393,13 +393,8 @@ app.post('/api/reset', (req, res) => {
   res.json({ success: true });
 });
 
-// Serve static files from root directory for requests that reach here
-// Vercel should serve static files automatically, but if they reach Express, serve them
-const rootDir = path.join(__dirname, '..');
-const serveStatic = express.static(rootDir, { index: false });
-
-// This Express app only handles API routes - no catch-all needed
-// Static files and index.html are served directly by Vercel
+// This Express app only handles API routes
+// Static files (CSS, JS, HTML) are served directly by Vercel
 
 // Export the app for Vercel serverless functions
 module.exports = app;
