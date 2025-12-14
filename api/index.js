@@ -411,7 +411,18 @@ app.use(express.static(rootDir, {
   }
 }));
 
-// Serve index.html for all non-API routes (SPA fallback)
+// Explicitly handle root route
+app.get('/', (req, res) => {
+  const indexPath = path.join(rootDir, 'index.html');
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      console.error('Error serving index.html:', err);
+      res.status(500).send('Error loading page');
+    }
+  });
+});
+
+// Serve index.html for all other non-API routes (SPA fallback)
 app.get('*', (req, res, next) => {
   // Don't handle API routes here - they should be handled by specific routes above
   if (req.path.startsWith('/api/')) {
