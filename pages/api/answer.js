@@ -67,8 +67,10 @@ export default async function handler(req, res) {
       answerIndex: submittedIndex,
       correct: isCorrect
     };
-  
+    
     console.log(`[ANSWER] ${player} submitting answer ${answerIndex} for Q${qIndex + 1}`);
+    console.log(`[ANSWER] Stored in allAnswers[${player}][${qIndex}]:`, gameState.allAnswers[player][qIndex]);
+    console.log(`[ANSWER] allAnswers[${player}] keys:`, Object.keys(gameState.allAnswers[player]));
   
     // Set answered flag FIRST, before any recalculation
     gameState.players[player].answered = true;

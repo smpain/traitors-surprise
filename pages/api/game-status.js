@@ -36,15 +36,33 @@ export default async function handler(req, res) {
     // This ensures we have answers even if currentAnswers was cleared
     const currentAnswersForDisplay = {};
     if (gameState.phase === 'showing-results') {
+      console.log(`[GAME-STATUS] Reconstructing answers for Q${gameState.currentQuestionIndex + 1} from allAnswers`);
+      console.log(`[GAME-STATUS] allAnswers keys:`, Object.keys(gameState.allAnswers || {}));
+      
       Object.keys(gameState.players).forEach(playerKey => {
         const playerAnswers = gameState.allAnswers[playerKey];
-        if (playerAnswers && playerAnswers[gameState.currentQuestionIndex]) {
-          currentAnswersForDisplay[playerKey] = playerAnswers[gameState.currentQuestionIndex];
+        console.log(`[GAME-STATUS] Player ${playerKey} allAnswers:`, playerAnswers);
+        
+        if (playerAnswers) {
+          // Try both string and number key (JavaScript object keys are strings)
+          const answer = playerAnswers[gameState.currentQuestionIndex] || 
+                        playerAnswers[String(gameState.currentQuestionIndex)];
+          
+          if (answer) {
+            console.log(`[GAME-STATUS] Found answer for ${playerKey}:`, answer);
+            currentAnswersForDisplay[playerKey] = answer;
+          } else {
+            console.warn(`[GAME-STATUS] No answer found for ${playerKey} at Q${gameState.currentQuestionIndex + 1}`);
+            console.warn(`[GAME-STATUS] Available question indices:`, Object.keys(playerAnswers));
+          }
+        } else {
+          console.warn(`[GAME-STATUS] No allAnswers entry for player ${playerKey}`);
         }
       });
     } else {
       // Use currentAnswers when still answering
       Object.assign(currentAnswersForDisplay, gameState.currentAnswers);
+      console.log(`[GAME-STATUS] Using currentAnswers:`, currentAnswersForDisplay);
     }
     
     const response = {
