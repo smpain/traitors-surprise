@@ -629,8 +629,9 @@ if (resetBtn) {
   resetBtn.addEventListener('click', resetGame);
 }
 
-// Initialize reset button visibility
+// Initialize visibility toggles (hide test features in production)
 toggleResetButton();
+toggleSimulatePanel();
 
 // Load simulate state on page load (only if on localhost)
 if (isLocalhost()) {
