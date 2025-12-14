@@ -401,51 +401,21 @@ app.post('/api/reset', (req, res) => {
   res.json({ success: true });
 });
 
-// For Vercel: serve static files and index.html
-// In serverless, __dirname points to the function directory, so we need to go up one level
-// Use process.cwd() as fallback for Vercel serverless environment
-const rootDir = __dirname ? path.join(__dirname, '..') : process.cwd();
+// For Vercel: This serverless function only handles API routes
+// Static files (HTML, CSS, JS) are served automatically by Vercel
+// The root route (/) will serve index.html automatically
 
-// Serve static files (CSS, JS, images) - only if they reach Express
-// Vercel should serve these automatically, but this is a fallback
-app.use(express.static(rootDir, {
-  index: false, // Don't serve index.html automatically
-  setHeaders: (res, filePath) => {
-    // Set proper content types
-    if (filePath.endsWith('.css')) {
-      res.setHeader('Content-Type', 'text/css');
-    } else if (filePath.endsWith('.js')) {
-      res.setHeader('Content-Type', 'application/javascript');
-    }
+// Catch-all for any non-API routes that mistakenly reach this function
+// This shouldn't happen in normal operation, but provides a clear error
+app.use((req, res) => {
+  // Only handle /api/* routes in this serverless function
+  if (!req.path.startsWith('/api/')) {
+    return res.status(404).json({ 
+      error: 'Not found',
+      message: 'This serverless function only handles /api/* routes. Static files should be served by Vercel.'
+    });
   }
-}));
-
-// Explicitly handle root route
-app.get('/', (req, res) => {
-  const indexPath = path.join(rootDir, 'index.html');
-  res.sendFile(indexPath, (err) => {
-    if (err) {
-      console.error('Error serving index.html:', err);
-      res.status(500).send('Error loading page');
-    }
-  });
-});
-
-// Serve index.html for all other non-API routes (SPA fallback)
-app.get('*', (req, res, next) => {
-  // Don't handle API routes here - they should be handled by specific routes above
-  if (req.path.startsWith('/api/')) {
-    return res.status(404).json({ error: 'API route not found' });
-  }
-  
-  // Serve index.html for SPA routing
-  const indexPath = path.join(rootDir, 'index.html');
-  res.sendFile(indexPath, (err) => {
-    if (err) {
-      console.error('Error serving index.html:', err);
-      res.status(500).send('Error loading page');
-    }
-  });
+  res.status(404).json({ error: 'API route not found' });
 });
 
 // Export the app for Vercel serverless functions
